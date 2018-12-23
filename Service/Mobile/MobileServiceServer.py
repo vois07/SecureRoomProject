@@ -10,6 +10,12 @@ import netifaces as ni
 import base64
 from Crypto.PublicKey import RSA
 from Crypto import Random
+import logging
+import time
+
+# ***************** SETUP ***************************
+logFileName = time.asctime(time.localtime(time.time())).replace(':','').replace(' ', '_') + '.log'
+logging.basicConfig(filename=logFileName, level=logging.DEBUG)
 
 MAX_CONNECTIONS_IN_QUEUE = 20
 SERVER_PORT = 7131
@@ -26,9 +32,10 @@ if os.path.exists("publ_client_keys.dd") == True:
 myKey = ''
 if os.path.exists("priv_key.pem") == False:
   print("[ INFO ] Server not found RSA keys. Generate new one.")
+  logging.info('Server not found RSA keys. Generate new one.')
   random_generator = Random.new().read
-  # Public and Private key
-  myKey = RSA.generate(1024, random_generator)
+  #myKey = RSA.generate(1024, random_generator)
+  myKey = RSA.generate(4096, random_generator)
   f = open('priv_key.pem', 'wb')
   f.write(myKey.exportKey('PEM'))
   f.close()
@@ -42,9 +49,7 @@ str_pubKey = publicKey.exportKey('PEM').decode('utf-8')
 str_pubKey = str_pubKey.replace('-----BEGIN PUBLIC KEY-----', '')
 str_pubKey = str_pubKey.replace('-----END PUBLIC KEY-----', '')
 str_pubKey = str_pubKey.replace('\n', '')
-#print("[ DEBUG ] Server public key:")
-#print(str_pubKey)
-
+# ******************************************************************
 
 def recv_until(sock, marker, rcvlimit):
   data = ""
@@ -54,33 +59,35 @@ def recv_until(sock, marker, rcvlimit):
       dnow = dnow.decode('utf-8')
       if(len(dnow) == 0):
         print("[ WARNING ] recv_until function failed at recv. Last recived data:", data)
+        logging.warning('recv_until function failed at recv. Last recived data:' + str(data))
         return False
     except socket.error as msg:
       print("[ WARNING ] recv_until function failed: ", msg, " Last recived data:", data)
+      logging.warning('recv_until function failed:' + str(msg) + ' Last recived data:' + str(data))
       return False
     data += dnow
     if len(data) > rcvlimit:
       print("[ WARNING ] recv_until function failed: DATA_LIMIT_REACHED: ", rcvlimit," Last recived data:", data)
+      logging.warning('recv_until function failed: DATA_LIMIT_REACHED: ' + str(rcvlimit) + ' Last recived data:' + str(data))
       return False
   return data
 
 class SrvHandler(threading.Thread):
-  def __init__(self, clientSock, clientAddr, clientHostname):
-    super(Handler, self).__init__()
-    self.clientSock = clientSock
-    self.clientAddr = clientAddr
-    self.clientHostNm = clientHostname
+    def __init__(self, clientSock, clientAddr):
+        super(Handler, self).__init__()
+        self.clientSock = clientSock
+        self.clientAddr = clientAddr
 
   def run(self):
     recvData = recv_until(self.clientSock, "\r\n\r\n", 102400) #102400 == 100KB
     if(recvData != False):
-      machin, usrid, scode, rdata = recvData.split("$$$")
-      test_code_value = False
-      if(machin == "A"):
+        usrid, scode, rdata = recvData.split("$$$")
+        test_code_value = False
         try:
           code = int(scode)
         except:
           print("[ WARNING ] Cannot get msg code!")
+          logging.warning('Cannot get msg code!')
           test_code_value = True
         if(test_code_value == False):
          # Client download public key from server
@@ -88,6 +95,7 @@ class SrvHandler(threading.Thread):
             messg = "101$$$" + str_pubKey
             self.clientSock.sendall(messg.encode("utf-8"))
             print("[ INFO ] Sent public key to ", usrid)
+            logging.info('Sent public key to ' + str(usrid))
         # Send android’s user server's public key
           elif(code == 102):
             try:
@@ -99,12 +107,13 @@ class SrvHandler(threading.Thread):
               str_publicKeyAndroid = str_publicKeyAndroid.replace('-----BEGIN PUBLIC KEY-----', '')
               str_publicKeyAndroid = str_publicKeyAndroid.replace('-----END PUBLIC KEY-----', '')
               str_publicKeyAndroid = str_publicKeyAndroid.replace('\n', '')
-              print("[ INFO ] ", usrid, " public key: ", str_publicKeyAndroid)
+              #print("[ INFO ] ", usrid, " public key: ", str_publicKeyAndroid)
               f.write("%s %s\n" % (usrid, str_publicKeyAndroid))
               f.close()
               clientRSA_PublicKeys[usrid] = publicKeyAndroid
             except:
               print("[ WARNING ] Exception on code 102")
+              logging.warning('Exception on code 102')
           # Ask to enter to the room
           #elif(code == 103):
           # Ask to exit the room
@@ -127,16 +136,10 @@ class SrvHandler(threading.Thread):
               self.clientSock.sendall(sendData.encode("utf-8"))
             except:
               print("[ WARNING ] Exception on code 202")
+              logging.warning('Exception on code 202')
           else:
-            print("[ WARNING ] Android unknow code: ", code)
-      elif(machin == "Rrrrr"):
-        try:
-          code = int(scode)
-        except:
-          print("[ WARNING ] Cannot get msg code!")
-          test_code_value = True
-      else:
-        print("[ ALERT ] Unknown machine!")
+            print("[ WARNING ] Unknow code: ", code)
+            logging.warning('Unknow code: ' + str(code))
     #Close connection in both sides: client and server, no data send
     self.clientSock.shutdown(socket.SHUT_RDWR)
     self.clientSock.close()
@@ -158,11 +161,13 @@ def main():
       clientSock, clientAddr = server.accept()
       clientHostname = socket.gethostbyaddr(clientAddr[0])[0]
       print("[ INFO ] New connection from: %s:%i", clientAddr, " { ", clientHostname, " }");
-      clientThread = SrvHandler(clientSock, clientAddr, clientHostname)
+      logging.info('New connection from: ' + str(clientAddr))
+      clientThread = SrvHandler(clientSock, clientAddr)
       clientThread.daemon = False #When kill main process, then it kill threads
       clientThread.start()
   except KeyboardInterrupt:
     print("[ Keyboard Interrupt ] Close server\n")
+    logging.info('[ Keyboard Interrupt ] Close server')
     server.close()
 
 if __name__ == "__main__":
