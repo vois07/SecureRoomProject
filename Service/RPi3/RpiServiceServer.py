@@ -7,15 +7,23 @@ import os.path
 import threading
 import telnetlib
 import netifaces as ni
-import base64
-from Crypto.PublicKey import RSA
-from Crypto import Random
-import logging
-import time
+import pymysql
 
 MAX_CONNECTIONS_IN_QUEUE = 5
 SERVER_PORT = 7133
 NET_DEVICE_INTERFACE = 'enp0s8'
+
+# ********* CONNECT TO MySQL ***********************
+connDB = ''
+curDB = ''
+try:
+    connDB = pymysql.connect(host='localhost', port=3306, user='engineer', passwd='en$5V6nR', db='psv_room')
+    curDB = connDB.cursor()
+    print(' [INFO] CONNECTED TO MySQL')
+except:
+    print(' [ERROR] Cannot connect to MySQL!!!!')
+    exit()
+# ***************************************************
 
 def recv_until(sock, marker, rcvlimit):
   data = ""
@@ -72,6 +80,8 @@ def main():
   except KeyboardInterrupt:
     print("[ Keyboard Interrupt ] Close server\n")
     server.close()
+    curDB.close()
+    connDB.close()
 
 if __name__ == "__main__":
   main()

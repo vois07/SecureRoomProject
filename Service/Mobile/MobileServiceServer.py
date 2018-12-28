@@ -12,6 +12,18 @@ from Crypto.PublicKey import RSA
 from Crypto import Random
 import logging
 import time
+import pymysql
+
+# ********* CONNECT TO MySQL ***********************
+connDB = ''
+curDB = ''
+try:
+    connDB = pymysql.connect(host='localhost', port=3306, user='engineer', passwd='en$5V6nR', db='psv_room')
+    curDB = connDB.cursor()
+    print(' [INFO] CONNECTED TO MySQL')
+except:
+    print(' [ERROR] Cannot connect to MySQL!!!!')
+    exit()
 
 # ***************** SETUP ***************************
 logFileName = time.asctime(time.localtime(time.time())).replace(':','').replace(' ', '_') + '.log'
@@ -79,67 +91,132 @@ class SrvHandler(threading.Thread):
         self.clientAddr = clientAddr
 
     def run(self):
-        recvData = recv_until(self.clientSock, "\r\n\r\n", 102400) #102400 == 100KB
-        if(recvData != False):
-            usrid, scode, rdata = recvData.split("$$$")
-            test_code_value = False
-            try:
-              code = int(scode)
-            except:
-              print("[ WARNING ] Cannot get msg code!")
-              logging.warning('Cannot get msg code!')
-              test_code_value = True
-            if(test_code_value == False):
-             # Client download public key from server
-              if(code == 101):
-                messg = "101$$$" + str_pubKey
-                self.clientSock.sendall(messg.encode("utf-8"))
-                print("[ INFO ] Sent public key to ", usrid)
-                logging.info('Sent public key to ' + str(usrid))
-            # Send android’s user server's public key
-              elif(code == 102):
+        loopControl = True
+        while(loopControl):
+            recvData = recv_until(self.clientSock, "\r\n\r\n", 102400) #102400 == 100KB
+            if(recvData != False):
+                usrid, scode, rdata = recvData.split("$$$")
+                test_code_value = False
                 try:
-                  rrdata = rdata.replace('\r\n\r\n', '')
-                  f = open('publ_client_keys.dd', 'a')
-                  rsa_android = base64.b64decode(rrdata)
-                  publicKeyAndroid = RSA.importKey(rsa_android).publickey()
-                  str_publicKeyAndroid = publicKeyAndroid.exportKey('PEM').decode('utf-8')
-                  str_publicKeyAndroid = str_publicKeyAndroid.replace('-----BEGIN PUBLIC KEY-----', '')
-                  str_publicKeyAndroid = str_publicKeyAndroid.replace('-----END PUBLIC KEY-----', '')
-                  str_publicKeyAndroid = str_publicKeyAndroid.replace('\n', '')
-                  #print("[ INFO ] ", usrid, " public key: ", str_publicKeyAndroid)
-                  f.write("%s %s\n" % (usrid, str_publicKeyAndroid))
-                  f.close()
-                  clientRSA_PublicKeys[usrid] = publicKeyAndroid
+                  code = int(scode)
                 except:
-                  print("[ WARNING ] Exception on code 102")
-                  logging.warning('Exception on code 102')
-              # Ask to enter to the room
-              #elif(code == 103):
-              # Ask to exit the room
-              #elif(code == 104):
-              # Send data to Android's user
-              #elif(code == 105):
-              #
-              elif(code == 201):
-                print("[ INFO ] TEST CONNECTION WITH ", usrid, " RECIVE: ", rdata.replace('\r\n\r\n', ''))
-                messg = "SERV_ANSWER".encode("utf-8")
-                self.clientSock.sendall(messg)
-              elif(code == 202):
-                try:
-                  rrdata = rdata.replace('\r\n\r\n', '')
-                  dec_data = myKey.decrypt(base64.b64decode(rrdata))
-                  print("[ INFO ] Recived data: ", dec_data.decode('utf-8'), " from: ", usrid)
-                  messg = "SERVER_HELLO_WORLD".encode('utf-8')
-                  enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
-                  sendData = "DATA:" + str(base64.b64encode(enc_messg[0]))
-                  self.clientSock.sendall(sendData.encode("utf-8"))
-                except:
-                  print("[ WARNING ] Exception on code 202")
-                  logging.warning('Exception on code 202')
-              else:
-                print("[ WARNING ] Unknow code: ", code)
-                logging.warning('Unknow code: ' + str(code))
+                  print("[ WARNING ] Cannot get msg code!")
+                  logging.warning('Cannot get msg code!')
+                  test_code_value = True
+                if(test_code_value == False):
+                 # Client download public key from server
+                  if(code == 101):
+                    messg = "101$$$" + str_pubKey
+                    self.clientSock.sendall(messg.encode("utf-8"))
+                    print("[ INFO ] Sent public key to ", usrid)
+                    logging.info('Sent public key to ' + str(usrid))
+                # Send android’s user server's public key
+                  elif(code == 102):
+                    try:
+                      rrdata = rdata.replace('\r\n\r\n', '')
+                      f = open('publ_client_keys.dd', 'a')
+                      rsa_android = base64.b64decode(rrdata)
+                      publicKeyAndroid = RSA.importKey(rsa_android).publickey()
+                      str_publicKeyAndroid = publicKeyAndroid.exportKey('PEM').decode('utf-8')
+                      str_publicKeyAndroid = str_publicKeyAndroid.replace('-----BEGIN PUBLIC KEY-----', '')
+                      str_publicKeyAndroid = str_publicKeyAndroid.replace('-----END PUBLIC KEY-----', '')
+                      str_publicKeyAndroid = str_publicKeyAndroid.replace('\n', '')
+                      #print("[ INFO ] ", usrid, " public key: ", str_publicKeyAndroid)
+                      f.write("%s %s\n" % (usrid, str_publicKeyAndroid))
+                      f.close()
+                      clientRSA_PublicKeys[usrid] = publicKeyAndroid
+                      sqlTask = "INSERT INTO `users` (`name`) VALUES (%s)"
+                      curDB.execute(sqlTask, (usrid)
+                      connDB.commit()
+                      print("[ INFO ] Add user: ", usrid)
+                      logging.info('Add user: ' + str(usrid))
+                    except:
+                      print("[ WARNING ] Exception on code 102")
+                      logging.warning('Exception on code 102')
+                  # Ask to enter to the room
+                  elif(code == 103):
+                      print("[ INFO ] User: ", usrid, ' ask to enter room')
+                      logging.info('User: ' + str(usrid) + ' ask to enter room')
+                      sqlTask = "SELECT * FROM `users` WHERE `name`=%s"
+                      curDB.execute(sqlTask, (usrid)
+                      result = curDB.fetchone()
+                      if(type(result) is tuple):
+                          bitvalue = result[3]
+                          if(bitvalue == 'None'):
+                              print('[ WARNING ] CODE 103 Problem with User: ', usrid, ' no bit_confirm set.')
+                              logging.warning("CODE 103 Problem with User: " + str(usrid) + " no bit_confirm set.")
+                              messg = "NO_BIT".encode('utf-8')
+                              enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
+                              sendData = "DATA:" + str(base64.b64encode(enc_messg[0]))
+                              self.clientSock.sendall(sendData.encode("utf-8"))
+                          else:
+                              print('[ INFO ] User: ', usrid, ' enter to room.')
+                              logging.info("User: " + str(usrid) + " enter to room")
+                              messg = "ENTER".encode('utf-8')
+                              enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
+                              sendData = "DATA:" + str(base64.b64encode(enc_messg[0]))
+                              self.clientSock.sendall(sendData.encode("utf-8"))
+                              #
+                              #SEND to RPi3 info to open door
+                              sqlTask = "UPDATE `users` SET status_in_room=%s WHERE name=%s"
+                              curDB.execute(sqlTask, (1, result[1]))
+                              connDB.commit()
+                      else:
+                          print('[ WARNING ] CODE 103 Problem with User: ', usrid)
+                          logging.warning("CODE 103 Problem with User: " + str(usrid))
+                          messg = "NO_USER".encode('utf-8')
+                          enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
+                          sendData = "DATA:" + str(base64.b64encode(enc_messg[0]))
+                          self.clientSock.sendall(sendData.encode("utf-8"))
+                  # Ask to exit the room
+                  elif(code == 104):
+                      print("[ INFO ] User: ", usrid, ' leave room')
+                      logging.info('User: ' + str(usrid) + ' leave room')
+                      sqlTask = "SELECT * FROM `users` WHERE `name`=%s"
+                      curDB.execute(sqlTask, (usrid)
+                      result = curDB.fetchone()
+                      if(type(result) is tuple):
+                          print()
+                          # sqlTask = "UPDATE `users` SET status_in_room=%s WHERE name=%s"
+                          # curDB.execute(sqlTask, (0, result[1]))
+                          # connDB.commit()
+                      else:
+                          print()
+                  # Send data to Android's user
+                  elif(code == 105):
+                      print("[ INFO ] User: ", usrid, ' ask for data from DB')
+                      logging.info('User: ' + str(usrid) + ' ask for data from DB')
+                      sqlTask = "SELECT * FROM `users` WHERE `name`=%s"
+                      curDB.execute(sqlTask, (usrid)
+                      result = curDB.fetchone()
+                      if(type(result) is tuple):
+                          print()
+                      else:
+                          print()
+                  elif(code == 106):
+                      loopControl = False
+                      print("[ INFO ] DISCONNECTION WITH ", usrid)
+                      logging.info("DISCONNECTION WITH " + str(usrid))
+                      continue
+                  elif(code == 201):
+                    print("[ INFO ] TEST CONNECTION WITH ", usrid, " RECIVE: ", rdata.replace('\r\n\r\n', ''))
+                    messg = "SERV_ANSWER".encode("utf-8")
+                    self.clientSock.sendall(messg)
+                  elif(code == 202):
+                    try:
+                      rrdata = rdata.replace('\r\n\r\n', '')
+                      dec_data = myKey.decrypt(base64.b64decode(rrdata))
+                      print("[ INFO ] Recived data: ", dec_data.decode('utf-8'), " from: ", usrid)
+                      messg = "SERVER_HELLO_WORLD".encode('utf-8')
+                      enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
+                      sendData = "DATA:" + str(base64.b64encode(enc_messg[0]))
+                      self.clientSock.sendall(sendData.encode("utf-8"))
+                    except:
+                      print("[ WARNING ] Exception on code 202")
+                      logging.warning('Exception on code 202')
+                  else:
+                    print("[ WARNING ] Unknow code: ", code)
+                    logging.warning('Unknow code: ' + str(code))
         #Close connection in both sides: client and server, no data send
         self.clientSock.shutdown(socket.SHUT_RDWR)
         self.clientSock.close()
@@ -169,6 +246,8 @@ def main():
     print("[ Keyboard Interrupt ] Close server\n")
     logging.info('[ Keyboard Interrupt ] Close server')
     server.close()
+    curDB.close()
+    connDB.close()
 
 if __name__ == "__main__":
   main()
