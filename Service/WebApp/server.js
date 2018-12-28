@@ -10,7 +10,7 @@ var con = mysql.createConnection({
   host: "localhost",
   user: "engineer",
   password: "en$5V6nR",
-  database: 'smart_office'
+  database: 'psv_room'
 });
 
 
