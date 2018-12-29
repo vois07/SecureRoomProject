@@ -18,9 +18,31 @@ var con = mysql.createConnection({
   con.connect(function(err) {
   if (err) throw err;
   console.log("Connected!");
-  con.query("select * from temperatures", function (err, result) {
+  console.log("\n");
+  con.query("select * from users", function (err, result) {
     if (err) throw err;
-    console.log("Result: " + result);
+	console.log("----PRACOWNCY----");
+	for(var i in result){		
+		console.log("Pracownik: " + result[i]["name"]+" W biurze: "+result[i]["status_in_room"].toString()+" Pozwolenia: "+result[i]["bit_confirm"]);
+	}
+    console.log("\n");
+  });
+  con.query("select * from measurements", function (err, result) {
+    if (err) throw err;
+	console.log("----POMIARY----");
+	for(var i in result){
+		console.log("Data: " + result[i]["measur_date"]+" | Temperatura 1: "+result[i]["temperature1"].toString()+" | Temperatura 2: "+result[i]["temperature2"].toString()+" | Temperatura 3: "+result[i]["temperature3"].toString()+" Pożar: "+result[i]["smoke_sensor"].toString());
+	}
+	console.log("\n");
+    
+  });
+  con.query("select p.name,p.id,k.user_id,k.start_time,k.end_time from users p join user_times k on p.id = k.user_id", function (err, result) {
+    if (err) throw err;
+	console.log("----PRACE PRACOWNIKÓW----");
+	for(var i in result){
+		console.log("Pracownik: " + result[i]["name"]+" Czas przybycia: "+result[i]["start_time"]+" Czas wyjścia: "+result[i]["end_time"]);
+	}
+    console.log("\n");
   });
 });
 
