@@ -64,6 +64,7 @@ class SrvHandler(threading.Thread):
 
 def main():
   print("[ INFO ] RpiServiceServer v0.1")
+  print("[ INFO ] Server start at: ", strftime("%Y-%m-%d %H:%M:%S", gmtime()))
   #Get server IP
   ip_server = ni.ifaddresses(NET_DEVICE_INTERFACE)[ni.AF_INET][0]['addr']
   print("[ INFO ] IP: ",ip_server," PORT: ",SERVER_PORT, " DEV: ", NET_DEVICE_INTERFACE)

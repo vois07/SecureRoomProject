@@ -35,12 +35,17 @@ NET_DEVICE_INTERFACE = 'enp0s3' # 'enp0s8'
 
 clientRSA_PublicKeys = {}
 if os.path.exists("publ_client_keys.dd") == True:
+  cliNam = ''
+  cliPubKey = ''
   with open('publ_client_keys.dd') as f:
     for line in f:
-      cliNam = line.split()[0]
-      cliPubKey = line.split()[1]
-      clientRSA_PublicKeys[cliNam] = RSA.importKey(cliPubKey).publickey()
-
+        if(str(line).find("User:") != -1):
+            cliNam = str(line.split()[1])
+        elif(str(line).find("END PUBLIC") != -1):
+            cliPubKey += str(line)
+            clientRSA_PublicKeys[cliNam] = RSA.importKey(cliPubKey).publickey()
+        else:
+            cliPubKey += line
 myKey = ''
 if os.path.exists("priv_key.pem") == False:
   print("[ INFO ] Server not found RSA keys. Generate new one.")
@@ -120,23 +125,35 @@ class SrvHandler(threading.Thread):
               elif(code == 102):
                 try:
                   rrdata = rdata.replace('\r\n\r\n', '')
-                  f = open('publ_client_keys.dd', 'a')
                   rsa_android = base64.b64decode(rrdata)
                   publicKeyAndroid = RSA.importKey(rsa_android).publickey()
-                  str_publicKeyAndroid = publicKeyAndroid.exportKey('PEM').decode('utf-8')
-                  str_publicKeyAndroid = str_publicKeyAndroid.replace('-----BEGIN PUBLIC KEY-----', '')
-                  str_publicKeyAndroid = str_publicKeyAndroid.replace('-----END PUBLIC KEY-----', '')
-                  str_publicKeyAndroid = str_publicKeyAndroid.replace('\n', '')
-                  #print("[ INFO ] ", usrid, " public key: ", str_publicKeyAndroid)
-                  f.write("%s %s\n" % (usrid, str_publicKeyAndroid))
-                  f.close()
-                  clientRSA_PublicKeys[usrid] = publicKeyAndroid
-                  sqlTask = "INSERT INTO `users` (`name`) VALUES (%s)"
-                  curDB.execute(sqlTask, (usrid))
-                  connDB.commit()
+                  print("[ INFO ] Recive public RSA from: ", usrid)
+                  valFlag = False
+                  if os.path.exists("publ_client_keys.dd") == True:
+                     usrTest = str(usrid)
+                     with open('publ_client_keys.dd') as f:
+                       for line in f:
+                           if(str(line).find(usrTest) != -1):
+                              print("[ INFO ] Server has RSA key from: ", usrid)
+                              valFlag = True
+                  if(valFlag == False):
+                      f = open('publ_client_keys.dd', 'a')
+                      str_publicKeyAndroid = publicKeyAndroid.exportKey('PEM').decode('utf-8')
+                      # str_publicKeyAndroid = str_publicKeyAndroid.replace('-----BEGIN PUBLIC KEY-----', '')
+                      # str_publicKeyAndroid = str_publicKeyAndroid.replace('-----END PUBLIC KEY-----', '')
+                      # str_publicKeyAndroid = str_publicKeyAndroid.replace('\n', '')
+                      f.write("User: %s\n%s\n" % (usrid, str_publicKeyAndroid))
+                      f.close()
+                      clientRSA_PublicKeys[usrid] = publicKeyAndroid
+                  try:
+                      sqlTask = "INSERT INTO `users` (`name`) VALUES (%s)"
+                      curDB.execute(sqlTask, (usrid))
+                      connDB.commit()
+                      print("[ INFO ] Add user: ", usrid)
+                  except:
+                      print("[ INFO ] User exist in database")
                   messg = str(usrid) + "$$$102$$$DATA$$$OK"
                   self.clientSock.sendall(messg.encode("utf-8"))
-                  print("[ INFO ] Add user: ", usrid)
                   logging.info('Add user: ' + str(usrid))
                 except:
                   print("[ WARNING ] Exception on code 102")
@@ -233,10 +250,12 @@ class SrvHandler(threading.Thread):
                 self.clientSock.sendall(messg)
               elif(code == 202):
                 try:
+                  print("[ INFO ] TEST ENCRYPTION WITH ", usrid)
                   rrdata = rdata.replace('\r\n\r\n', '')
                   dec_data = myKey.decrypt(base64.b64decode(rrdata))
                   print("[ INFO ] Recived data: ", dec_data.decode('utf-8'), " from: ", usrid)
-                  messg = "SERVER_HELLO_WORLD".encode('utf-8')
+                  logging.info("Code 202 Recived data: " + str(dec_data.decode('utf-8')) + " from: " + str(usrid))
+                  messg = "SERV_OK".encode('utf-8')
                   enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
                   sendData = str(usrid) + "$$$202$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
                   self.clientSock.sendall(sendData.encode("utf-8"))
@@ -252,6 +271,8 @@ class SrvHandler(threading.Thread):
 
 def main():
   print("[ INFO ] MobileServiceServer v0.4")
+  print("[ INFO ] Server start at: ", strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+  logging.info("Server start at: " + str(strftime("%Y-%m-%d %H:%M:%S", gmtime())))
   #Get server IP
   ip_server = ni.ifaddresses(NET_DEVICE_INTERFACE)[ni.AF_INET][0]['addr']
   print("[ INFO ] IP: ",ip_server," PORT: ",SERVER_PORT, " DEV: ", NET_DEVICE_INTERFACE)
