@@ -95,7 +95,7 @@ class SrvHandler(threading.Thread):
         # while(loopControl):
         recvData = recv_until(self.clientSock, "\r\n\r\n", 102400) #102400 == 100KB
         # if(recvData == False):
-        #     print(" [ WARNING ] TERMINATED CONNECTION")
+        #     print("[ WARNING ] TERMINATED CONNECTION")
         #     logging.error("TERMINATED CONNECTION")
         #     loopControl = False
         #     continue
@@ -112,7 +112,7 @@ class SrvHandler(threading.Thread):
             if(test_code_value == False):
              # Client download public key from server
               if(code == 101):
-                messg = "DATA$$$" + str_pubKey
+                messg = str(usrid) + "$$$101$$$DATA$$$" + str_pubKey
                 self.clientSock.sendall(messg.encode("utf-8"))
                 print("[ INFO ] Sent public key to ", usrid)
                 logging.info('Sent public key to ' + str(usrid))
@@ -134,11 +134,15 @@ class SrvHandler(threading.Thread):
                   sqlTask = "INSERT INTO `users` (`name`) VALUES (%s)"
                   curDB.execute(sqlTask, (usrid))
                   connDB.commit()
+                  messg = str(usrid) + "$$$102$$$DATA$$$OK"
+                  self.clientSock.sendall(messg.encode("utf-8"))
                   print("[ INFO ] Add user: ", usrid)
                   logging.info('Add user: ' + str(usrid))
                 except:
                   print("[ WARNING ] Exception on code 102")
                   logging.warning('Exception on code 102')
+                  messg = str(usrid) + "$$$102$$$DATA$$$NO"
+                  self.clientSock.sendall(messg.encode("utf-8"))
               # Ask to enter to the room
               elif(code == 103):
                   # strftime("%Y-%m-%d %H:%M:%S", gmtime())
@@ -154,14 +158,14 @@ class SrvHandler(threading.Thread):
                           logging.warning("CODE 103 Problem with User: " + str(usrid) + " no bit_confirm set.")
                           messg = "NO_BIT".encode('utf-8')
                           enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
-                          sendData = "DATA$$$" + str(base64.b64encode(enc_messg[0]))
+                          sendData =  str(usrid) + "$$$103$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
                           self.clientSock.sendall(sendData.encode("utf-8"))
                       else:
                           print('[ INFO ] User: ', usrid, ' enter to room.')
                           logging.info("User: " + str(usrid) + " enter to room")
                           messg = "ENTER".encode('utf-8')
                           enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
-                          sendData = "DATA$$$" + str(base64.b64encode(enc_messg[0]))
+                          sendData =  str(usrid) + "$$$103$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
                           self.clientSock.sendall(sendData.encode("utf-8"))
                           #
                           #SEND to RPi3 info to open door
@@ -173,7 +177,7 @@ class SrvHandler(threading.Thread):
                       logging.warning("CODE 103 Problem with User: " + str(usrid))
                       messg = "NO_USER".encode('utf-8')
                       enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
-                      sendData = "DATA$$$" + str(base64.b64encode(enc_messg[0]))
+                      sendData =  str(usrid) + "$$$103$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
                       self.clientSock.sendall(sendData.encode("utf-8"))
               # Ask to exit the room
               elif(code == 104):
@@ -202,20 +206,20 @@ class SrvHandler(threading.Thread):
                            logging.info("Send data to User: " + str(usrid))
                            messg = "NO_ACCESS".encode('utf-8')
                            enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
-                           sendData = "DATA$$$" + str(base64.b64encode(enc_messg[0]))
+                           sendData =  str(usrid) + "$$$105$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
                            self.clientSock.sendall(sendData.encode("utf-8"))
                        else:
                             print('[ INFO ] Send data to User: ', usrid)
                             logging.info("Send data to User: " + str(usrid))
                             messg = "DATA".encode('utf-8')
                             enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
-                            sendData = "DATA$$$" + str(base64.b64encode(enc_messg[0]))
+                            sendData = str(usrid) + "$$$105$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
                             self.clientSock.sendall(sendData.encode("utf-8"))
                   else:
                       print('[ WARNING ] CODE 105 Problem with no User: ', usrid)
                       logging.warning("CODE 105 Problem with no User: " + str(usrid))
                       messg = "NO_USER".encode('utf-8')
-                      sendData = "DATA$$$" + str(base64.b64encode(messg))
+                      sendData = str(usrid) + "$$$105$$$DATA$$$" + str(base64.b64encode(messg))
                       self.clientSock.sendall(sendData.encode("utf-8"))
               # elif(code == 106):
               #     loopControl = False
@@ -224,7 +228,8 @@ class SrvHandler(threading.Thread):
               #     continue
               elif(code == 201):
                 print("[ INFO ] TEST CONNECTION WITH ", usrid, " RECIVE: ", rdata.replace('\r\n\r\n', ''))
-                messg = "SERV_OK".encode("utf-8")
+                messg =  str(usrid) + "$$$202$$$DATA$$$" + "SERV_OK"
+                messg = messg.encode("utf-8")
                 self.clientSock.sendall(messg)
               elif(code == 202):
                 try:
@@ -233,7 +238,7 @@ class SrvHandler(threading.Thread):
                   print("[ INFO ] Recived data: ", dec_data.decode('utf-8'), " from: ", usrid)
                   messg = "SERVER_HELLO_WORLD".encode('utf-8')
                   enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
-                  sendData = "DATA$$$" + str(base64.b64encode(enc_messg[0]))
+                  sendData = str(usrid) + "$$$202$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
                   self.clientSock.sendall(sendData.encode("utf-8"))
                 except:
                   print("[ WARNING ] Exception on code 202")
@@ -260,8 +265,8 @@ def main():
   try:
     while True:
       clientSock, clientAddr = server.accept()
-      clientHostname = socket.gethostbyaddr(clientAddr[0])[0]
-      print("[ INFO ] Connection from: ", clientAddr, " { ", clientHostname, " }");
+      #clientHostname = socket.gethostbyaddr(clientAddr[0])[0]
+      print("[ INFO ] Connection from: ", clientAddr);
       logging.info('Connection from: ' + str(clientAddr))
       clientThread = SrvHandler(clientSock, clientAddr)
       clientThread.daemon = False #When kill main process, then it kill threads
