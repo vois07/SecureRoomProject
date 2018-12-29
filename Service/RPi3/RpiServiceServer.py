@@ -8,10 +8,11 @@ import threading
 import telnetlib
 import netifaces as ni
 import pymysql
+from time import gmtime, strftime
 
 MAX_CONNECTIONS_IN_QUEUE = 5
 SERVER_PORT = 7133
-NET_DEVICE_INTERFACE = 'enp0s8'
+NET_DEVICE_INTERFACE = 'enp0s3' # 'enp0s8'
 
 # ********* CONNECT TO MySQL ***********************
 connDB = ''
@@ -51,8 +52,11 @@ class SrvHandler(threading.Thread):
     def run(self):
         recvData = recv_until(self.clientSock, "\r\n\r\n", 102400) #102400 == 100KB
         if(recvData != False):
-            rdata = recvData
-            print(rdata)
+            temp1, temp2, temp3, smoke = recvData.split("$$$")
+            print('Recive: ', rdata)
+            # sqlTask = "INSERT INTO `measurements` (`measur_date`, `temperature1`, `temperature2`, `temperature3`, `smoke_sensor`) VALUES (%s, %s, %s, %s, %s)"
+            # curDB.execute(sqlTask, (strftime("%Y-%m-%d %H:%M:%S", gmtime()), temp1, temp2, temp3, smoke))
+            # connDB.commit()
         #Close connection in both sides: client and server, no data send
         self.clientSock.shutdown(socket.SHUT_RDWR)
         self.clientSock.close()
@@ -73,6 +77,7 @@ def main():
   try:
     while True:
       clientSock, clientAddr = server.accept()
+      print("[ INFO ] Connection from: ", clientAddr)
       clientThread = SrvHandler(clientSock, clientAddr)
       clientThread.daemon = False #When kill main process, then it kill threads
       clientThread.start()
