@@ -145,13 +145,13 @@ class SrvHandler(threading.Thread):
                       f.write("User: %s\n%s\n" % (usrid, str_publicKeyAndroid))
                       f.close()
                       clientRSA_PublicKeys[usrid] = publicKeyAndroid
-                  try:
-                      sqlTask = "INSERT INTO `users` (`name`) VALUES (%s)"
-                      curDB.execute(sqlTask, (usrid))
-                      connDB.commit()
-                      print("[ INFO ] Add user: ", usrid)
-                  except:
-                      print("[ INFO ] User exist in database")
+                      try:
+                          sqlTask = "INSERT INTO `users` (`name`) VALUES (%s)"
+                          curDB.execute(sqlTask, (usrid))
+                          connDB.commit()
+                          print("[ INFO ] Add user: ", usrid)
+                      except:
+                          print("[ INFO ] Problem with add user: ", usrid)
                   messg = str(usrid) + "$$$102$$$DATA$$$OK"
                   self.clientSock.sendall(messg.encode("utf-8"))
                   logging.info('Add user: ' + str(usrid))
@@ -228,7 +228,12 @@ class SrvHandler(threading.Thread):
                        else:
                             print('[ INFO ] Send data to User: ', usrid)
                             logging.info("Send data to User: " + str(usrid))
-                            messg = "DATA".encode('utf-8')
+
+                            sqlData = "vvvvvvvvv"
+                            # SQL
+                            # ELECT * FROM table WHERE timestamp BETWEEN '2012-05-05 00:00:00' AND '2012-05-05 23:59:59'
+
+                            messg = sqlData.encode('utf-8')
                             enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
                             sendData = str(usrid) + "$$$105$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
                             self.clientSock.sendall(sendData.encode("utf-8"))
