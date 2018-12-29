@@ -28,7 +28,7 @@ def print_db_fun():
         else:
             print("Allowed")
         result = curDB.fetchone()
-    if(type(result) is tuple):
+    if(type(result) is not tuple):
         print(' ^No users in database')
 
 def modify_db_fun():
