@@ -11,12 +11,19 @@
 var myChart = new Chart(ctx, {
   type: 'line',
   data: {
-    labels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
-    datasets: [{
-      label: 'Temperature',
-      data: [12, 13, 11, 10, 9, 10, 12],
-    }]
-  }
+    labels: [XLABELSX],
+    datasets: [XDATASETSX]
+  },
+  options: {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    min: 10,
+                    max: 30
+                }
+            }]
+        }
+    }
 });
 </script>
 </body>

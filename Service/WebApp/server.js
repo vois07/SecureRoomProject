@@ -1,3 +1,4 @@
+//MODUŁY
 var http = require('http');
 var url = require('url');
 var events = require('events');
@@ -14,10 +15,14 @@ var con = mysql.createConnection({
 });
 
 
+//DANE GŁÓWNE
+
+
 //Podłączanie się do bazy danych + wysyłanie jednego zapytania
   con.connect(function(err) {
   if (err) throw err;
   console.log("Connected!");
+  /*
   console.log("\n");
   con.query("select * from users", function (err, result) {
     if (err) throw err;
@@ -44,24 +49,58 @@ var con = mysql.createConnection({
 	}
     console.log("\n");
   });
+  */
 });
 
 
 var eventEmitter = new events.EventEmitter();
 //Główna pętla serwera
 http.createServer(function (req, response) {
+var labels;
+var labelsResult;
+var temperature1;
+var temperature2;
+var temperature3;
 	//Wgrywanie strony głównej
-    fs.readFile('index.html', 'utf-8', function (err, data) {
+	
+con.query("select * from measurements order by measur_date ASC", function (err, result) {
+    if (err) throw err;
+	labels = '';
+	labelsResult = [];
+	temperature1 = [];
+	temperature2 = [];
+	temperature3 = [];
+	for(var i in result){
+		labelsResult.push(result[i]["measur_date"].toString().slice(4,-21));
+		temperature1.push(result[i]["temperature1"]);
+		temperature2.push(result[i]["temperature2"]);
+		temperature3.push(result[i]["temperature3"]);
+		}
+     for(i in labelsResult){
+	  labels=labels+'\''+labelsResult[i]+'\',';
+  }
+  
+  
+  
+  fs.readFile('index.html', 'utf-8', function (err, data) {
         response.writeHead(200, { 'Content-Type': 'text/html' });
-
-        //var chartData = [];
-        //for (var i = 0; i < 7; i++)
-         //   chartData.push(Math.random() * 50);
-
-		//var result = data.replace('{{chartData}}', JSON.stringify(chartData));
+		data=data.replace('XLABELSX', labels);
+		var datasets = '';
+		var dataset = "{borderColor: 'rgba(255, 0, 0, 0.5)',backgroundColor: 'rgba(0, 0, 0, 0)', label: 'Temperature1',data: [XDATAX]}";
+		datasets = datasets+dataset.replace("XDATAX",temperature1.toString())+',';
+		dataset = "{borderColor: 'rgba(0, 255, 0, 0.5)',backgroundColor: 'rgba(0, 0, 0, 0)',label: 'Temperature2',data: [XDATAX]}";
+		datasets = datasets+dataset.replace("XDATAX",temperature2.toString())+',';
+		dataset = "{borderColor: 'rgba(0, 0, 255, 0.5)',backgroundColor: 'rgba(0, 0, 0, 0)',label: 'Temperature3',data: [XDATAX]}";
+		datasets = datasets+dataset.replace("XDATAX",temperature3.toString())+',';
+		data = data.replace('XDATASETSX', datasets);
         response.write(data);
         response.end();
     });
+  });
+ 
+	
+
+    
 
   /* PLIKI - Do późniejszego użycia
 	fs.appendFile('test.txt', 'tt', function (err) {
