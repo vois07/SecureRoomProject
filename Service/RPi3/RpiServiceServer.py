@@ -19,7 +19,6 @@ curDB = ''
 try:
     connDB = pymysql.connect(host='localhost', port=3306, user='engineer', passwd='en$5V6nR', db='psv_room')
     curDB = connDB.cursor()
-    print(' [INFO] CONNECTED TO MySQL')
 except:
     print(' [ERROR] Cannot connect to MySQL!!!!')
     exit()

@@ -12,6 +12,7 @@ from Crypto.PublicKey import RSA
 from Crypto import Random
 import logging
 import time
+from time import gmtime, strftime
 import pymysql
 
 # ********* CONNECT TO MySQL ***********************
@@ -20,7 +21,6 @@ curDB = ''
 try:
     connDB = pymysql.connect(host='localhost', port=3306, user='engineer', passwd='en$5V6nR', db='psv_room')
     curDB = connDB.cursor()
-    print(' [INFO] CONNECTED TO MySQL')
 except:
     print(' [ERROR] Cannot connect to MySQL!!!!')
     exit()
@@ -126,7 +126,7 @@ class SrvHandler(threading.Thread):
                       f.close()
                       clientRSA_PublicKeys[usrid] = publicKeyAndroid
                       sqlTask = "INSERT INTO `users` (`name`) VALUES (%s)"
-                      curDB.execute(sqlTask, (usrid)
+                      curDB.execute(sqlTask, (usrid))
                       connDB.commit()
                       print("[ INFO ] Add user: ", usrid)
                       logging.info('Add user: ' + str(usrid))
@@ -135,14 +135,15 @@ class SrvHandler(threading.Thread):
                       logging.warning('Exception on code 102')
                   # Ask to enter to the room
                   elif(code == 103):
+                      # strftime("%Y-%m-%d %H:%M:%S", gmtime())
                       print("[ INFO ] User: ", usrid, ' ask to enter room')
                       logging.info('User: ' + str(usrid) + ' ask to enter room')
                       sqlTask = "SELECT * FROM `users` WHERE `name`=%s"
-                      curDB.execute(sqlTask, (usrid)
+                      curDB.execute(sqlTask, (usrid))
                       result = curDB.fetchone()
                       if(type(result) is tuple):
                           bitvalue = result[3]
-                          if(bitvalue == 'None'):
+                          if(bitvalue == None):
                               print('[ WARNING ] CODE 103 Problem with User: ', usrid, ' no bit_confirm set.')
                               logging.warning("CODE 103 Problem with User: " + str(usrid) + " no bit_confirm set.")
                               messg = "NO_BIT".encode('utf-8')
@@ -173,7 +174,7 @@ class SrvHandler(threading.Thread):
                       print("[ INFO ] User: ", usrid, ' leave room')
                       logging.info('User: ' + str(usrid) + ' leave room')
                       sqlTask = "SELECT * FROM `users` WHERE `name`=%s"
-                      curDB.execute(sqlTask, (usrid)
+                      curDB.execute(sqlTask, (usrid))
                       result = curDB.fetchone()
                       if(type(result) is tuple):
                           print()
@@ -187,7 +188,7 @@ class SrvHandler(threading.Thread):
                       print("[ INFO ] User: ", usrid, ' ask for data from DB')
                       logging.info('User: ' + str(usrid) + ' ask for data from DB')
                       sqlTask = "SELECT * FROM `users` WHERE `name`=%s"
-                      curDB.execute(sqlTask, (usrid)
+                      curDB.execute(sqlTask, (usrid))
                       result = curDB.fetchone()
                       if(type(result) is tuple):
                           print()
