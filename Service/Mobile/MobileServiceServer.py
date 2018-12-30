@@ -183,9 +183,11 @@ class SrvHandler(threading.Thread):
                           sendData =  str(usrid) + "$$$103$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
                           self.clientSock.sendall(sendData.encode("utf-8"))
 
-                          #
-                          #SEND to RPi3 info to open door
-                          #
+                          HOSTRPI3 = '192.168.88.248'
+                          PORTRPI3 = 7755
+                          with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                              s.connect((HOSTRPI3, PORTRPI3))
+                              s.sendall("OPEN$$".encode('utf-8'))
 
                           print('[ INFO ] Update ENTER User: ', usrid, ' status in room.')
                           logging.info("Update ENTER User: " + str(usrid) + " status in room.")
@@ -274,7 +276,7 @@ class SrvHandler(threading.Thread):
                             temp2 = result[3]
                             temp3 = result[4]
                             smoke = result[5]
-                            sqlData = str(measure_time).split(" ")[0] + "$$$" + str(measure_time).split(" ")[1] + "$$$" + str(temp1) + "$$$" + str(temp2) + "$$$" + str(temp3) + "$$$" + str(smoke)
+                            sqlData = str(measure_time).split(" ")[0] + "$$$" + str(measure_time).split(" ")[1] + "$$$Temperatura1$$$" + str(temp1) + "$$$Temperatura2$$$" + str(temp2) + "$$$Temperatura3$$$" + str(temp3) + "$$$Dym$$$" + str(smoke)
                             messg = sqlData.encode('utf-8')
                             enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
                             sendData = str(usrid) + "$$$105$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
