@@ -98,6 +98,12 @@ class SrvHandler(threading.Thread):
         recvData = recv_until(self.clientSock, "\r\n\r\n", 102400) #102400 == 100KB
         if(recvData != False):
             usrid, scode, rdata = recvData.split("$$$")
+            if(not(bool(usrid.strip()))):
+                print("[ ERROR ] Empty User")
+                logging.error('Empty User')
+                self.clientSock.shutdown(socket.SHUT_RDWR)
+                self.clientSock.close()
+                return
             test_code_value = False
             try:
               code = int(scode)
