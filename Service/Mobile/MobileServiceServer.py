@@ -228,11 +228,14 @@ class SrvHandler(threading.Thread):
                        else:
                             print('[ INFO ] Send data to User: ', usrid)
                             logging.info("Send data to User: " + str(usrid))
-
-                            sqlData = "vvvvvvvvv"
-                            # SQL
-                            # ELECT * FROM table WHERE timestamp BETWEEN '2012-05-05 00:00:00' AND '2012-05-05 23:59:59'
-
+                            sqlTask = "SELECT * FROM `measurements` ORDER BY `measur_date` DESC LIMIT 1"
+                            curDB.execute(sqlTask, (time1, time2))
+                            result = curDB.fetchone()
+                            temp1 = result[2]
+                            temp2 = result[3]
+                            temp3 = result[4]
+                            smoke = result[5]
+                            sqlData += str(temp1) + "$$$" + str(temp2) + "$$$" + str(temp3) + "$$$" + str(smoke)
                             messg = sqlData.encode('utf-8')
                             enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
                             sendData = str(usrid) + "$$$105$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
