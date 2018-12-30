@@ -12,7 +12,7 @@ from time import gmtime, strftime
 
 MAX_CONNECTIONS_IN_QUEUE = 5
 SERVER_PORT = 7133
-NET_DEVICE_INTERFACE = 'enp0s3' # 'enp0s8'
+NET_DEVICE_INTERFACE = 'enp0s8'
 
 # ********* CONNECT TO MySQL ***********************
 connDB = ''
@@ -50,10 +50,10 @@ class SrvHandler(threading.Thread):
         self.clientAddr = clientAddr
 
     def run(self):
-        recvData = recv_until(self.clientSock, "\r\n\r\n", 102400) #102400 == 100KB
+        recvData = recv_until(self.clientSock, "%&", 102400) #102400 == 100KB
         if(recvData != False):
-            temp1, temp2, temp3, smoke = recvData.split("$$$")
-            print('Recive: ', rdata)
+            #temp1, temp2, temp3, smoke = recvData.split("%&")[0].split(" ")
+            print('[DATA RECIVE]\n', recvData)
             # sqlTask = "INSERT INTO `measurements` (`measur_date`, `temperature1`, `temperature2`, `temperature3`, `smoke_sensor`) VALUES (%s, %s, %s, %s, %s)"
             # curDB.execute(sqlTask, (strftime("%Y-%m-%d %H:%M:%S", gmtime()), temp1, temp2, temp3, smoke))
             # connDB.commit()

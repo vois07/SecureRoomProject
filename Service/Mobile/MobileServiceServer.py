@@ -163,6 +163,7 @@ class SrvHandler(threading.Thread):
                   logging.info('User: ' + str(usrid) + ' ask to enter room')
                   sqlTask = "SELECT * FROM `users` WHERE `name`=%s"
                   curDB.execute(sqlTask, (usrid))
+                  connDB.commit()
                   result = curDB.fetchone()
                   if(type(result) is tuple):
                       userIDdb = result[0]
@@ -209,6 +210,7 @@ class SrvHandler(threading.Thread):
                   logging.info('User: ' + str(usrid) + ' leave room')
                   sqlTask = "SELECT * FROM `users` WHERE `name`=%s"
                   curDB.execute(sqlTask, (usrid))
+                  connDB.commit()
                   result = curDB.fetchone()
                   if(type(result) is tuple):
                       userIDdb = result[0]
@@ -250,27 +252,29 @@ class SrvHandler(threading.Thread):
                   logging.info('User: ' + str(usrid) + ' ask for data from DB')
                   sqlTask = "SELECT * FROM `users` WHERE `name`=%s"
                   curDB.execute(sqlTask, (usrid))
+                  connDB.commit()
                   result = curDB.fetchone()
                   if(type(result) is tuple):
                        if(result[3] == None):
-                           print('[ INFO ] Send data to User: ', usrid)
-                           logging.info("Send data to User: " + str(usrid))
+                           print('[ INFO ] Send NO_ACCESS to User: ', usrid)
+                           logging.info("Send NO_ACCESS to User: " + str(usrid))
                            messg = "NO_ACCESS".encode('utf-8')
                            enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
                            sendData =  str(usrid) + "$$$105$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
                            self.clientSock.sendall(sendData.encode("utf-8"))
                        else:
-                            print('[ INFO ] Send data to User: ', usrid)
-                            logging.info("Send data to User: " + str(usrid))
+                            print('[ INFO ] Send data from db to User: ', usrid)
+                            logging.info("Send data from db to User: " + str(usrid))
                             sqlTask = "SELECT * FROM `measurements` ORDER BY `measur_date` DESC LIMIT 1"
-                            curDB.execute(sqlTask, (time1, time2))
+                            curDB.execute(sqlTask)
+                            connDB.commit()
                             result = curDB.fetchone()
                             measure_time = result[1]
                             temp1 = result[2]
                             temp2 = result[3]
                             temp3 = result[4]
                             smoke = result[5]
-                            sqlData += str(measure_time) + "$$$" + str(temp1) + "$$$" + str(temp2) + "$$$" + str(temp3) + "$$$" + str(smoke)
+                            sqlData = str(measure_time).split(" ")[0] + "$$$" + str(measure_time).split(" ")[1] + "$$$" + str(temp1) + "$$$" + str(temp2) + "$$$" + str(temp3) + "$$$" + str(smoke)
                             messg = sqlData.encode('utf-8')
                             enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
                             sendData = str(usrid) + "$$$105$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))

@@ -16,6 +16,7 @@ except:
 def print_db_fun():
     sqlTask = "SELECT * FROM `users`"
     curDB.execute(sqlTask)
+    connDB.commit()
     result = curDB.fetchone()
     while(type(result) is tuple):
         idperson = result[0]
@@ -33,7 +34,11 @@ def print_db_fun():
 
 def modify_db_fun():
     person = str(input('Person: '))
-    bitvalue = int(input('bit access: '))
+    bitvalue = str(input('bit access: '))
+    if (bitvalue.find("None") != -1):
+        bitvalue = None
+    else:
+        bitvalue = int(bitvalue)
     sqlTask = "UPDATE `users` SET bit_confirm=%s WHERE name=%s"
     curDB.execute(sqlTask, (bitvalue, person))
     connDB.commit()
