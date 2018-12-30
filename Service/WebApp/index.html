@@ -20,24 +20,7 @@ table.statistic {
 <hr>
 </div>
 <br>
-<table class="statistic" align="right" style="width:50%;">
-  <tr>
-    <th>Linie na wykresie</th>
-  </tr>
-  <tr>
-    <td><input type="checkbox" name="checkbox1" value="true"> Temperature1<br></td>
-    <td><input type="checkbox" name="checkbox2" value="true"> Temperature2<br></td> 
-  </tr>
-  <tr>
-    <td><input type="checkbox" name="checkbox3" value="true"> Temperature3<br></td>
-    <td><input type="checkbox" name="checkbox4" value="true"> Dym<br></td> 
-  </tr>
-  <tr  >
-    <td><input type="checkbox" name="checkbox1" value="true"> People<br></td>
-  </tr>
-   <tr>
-    <td><br></td>
-  </tr>
+<table class="statistic"  style="width:50%;margin:35px">
   <tr class="statistic">
     <th class="statistic">Statistic Name</th>
     <th class="statistic">Statistic Value</th> 
@@ -56,8 +39,7 @@ table.statistic {
   </tr>
 
 </table>
-<div style="width:50%">
-<canvas align="left" id="myChart" width = "700" height="300"  style="border:1px solid #000000"></canvas>
+<canvas   id="myChart" width = "700" height="300"  style="border:1px solid #000000;margin:35px"></canvas>
     <script>
 		var ctx = document.getElementById('myChart').getContext('2d');
 var myChart = new Chart(ctx, {
@@ -78,10 +60,40 @@ var myChart = new Chart(ctx, {
 		responsive: false
     }
 });
-   
-    //ctx.height = window.innerHeight*0.5;
 
 </script>
-</div>
+<form action="http://localhost:8081/main" method="GET">
+<table style="margin:35px;border: 1px solid black;"> 
+  <tr>
+    <th>Genereting custom chart</th>
+  </tr>
+  <tr>
+    <td><input type="checkbox" name="temperature1"> Temperature1<br></td>
+    <td><input type="checkbox" name="temperature2"> Temperature2<br></td> 
+  </tr>
+  <tr>
+    <td><input type="checkbox" name="temperature3"> Temperature3<br></td>
+    <td><input type="checkbox" name="people"> people<br></td> 
+  </tr>
+  <tr  >
+    <td>From</td>
+	<td>To</td>
+  </tr>
+    <tr  >
+    <td>From</td>
+	<td>To</td>
+  </tr>
+  <tr  >
+    <td><input type="date" name="dateFrom"></td>
+	<td><input type="date" name="dateTo"></td>
+  </tr>
+  <tr  >
+    <td><br></td>
+	<td>
+      <button>Generate chart</button>
+    </td>
+  </tr>
+</form>
+</table>
 </body>
 </html>

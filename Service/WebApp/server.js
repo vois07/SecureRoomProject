@@ -121,6 +121,10 @@ var server = app.listen(8081, function () {
    console.log("Example app listening at http://%s:%s", host, port)
 })
 
+app.get('/generate', function (req, res) {
+    console.log('works');
+});
+
 app.get('/main', function (req, res) {
    	var labels;
 var labelsResult;
@@ -186,69 +190,3 @@ con.query("select * from measurements order by measur_date ASC", function (err, 
   
   });
   })
-/*
-http.createServer(function (req, response) {
-
-
- 
-	
-
-    
-
-  /* PLIKI - Do późniejszego użycia
-	fs.appendFile('test.txt', 'tt', function (err) {
-  if (err) throw err;
-  console.log('Saved!');
-});
-
-	fs.open('test2.txt', 'w', function (err, file) {
-  if (err) throw err;
-  console.log('Saved!');
-});
-
-	fs.writeFile('test3.txt', 'tt', function (err) {
-  if (err) throw err;
-  console.log('Saved!');
-});
-
-//Usuwanie plików
-fs.unlink('test2.txt', function (err) {
-  if (err) throw err;
-  console.log('File deleted!');
-});
-
-
-fs.rename('test.txt', 'test4.txt', function (err) {
-  if (err) throw err;
-  console.log('File Renamed!');
-});
-*/
-
-/* URL - Do późniejszego użycia
-var adr = 'http://localhost:8080/default.htm?year=2017&month=february';
-var q = url.parse(adr, true);
-
-console.log(q.host); //returns 'localhost:8080'
-console.log(q.pathname); //returns '/default.htm'
-console.log(q.search); //returns '?year=2017&month=february'
-
-var qdata = q.query; //returns an object: { year: 2017, month: 'february' }
-console.log(qdata.month); //returns 'february'
-
-*/
-
-/*EVENTY - Do późniejszego użycia
-var myEventHandler = function () {
-  console.log('ttt');
-}
-eventEmitter.on('scream', myEventHandler);
-
-eventEmitter.emit('scream');
-*/
-
-
-
-
-/*
-}).listen(8080);
-*/
