@@ -111,6 +111,24 @@ function newDate(x){
 	return date;
 }
 
+function simDate(date){
+	
+var dd = date.getDate();
+var mm = date.getMonth()+1; //January is 0!
+var yyyy = date.getFullYear();
+var today;
+
+if(dd<10) {
+    dd = '0'+dd
+} 
+
+if(mm<10) {
+    mm = '0'+mm
+} 
+
+today = yyyy + '-' + mm + '-' + dd;
+return today
+}
 var eventEmitter = new events.EventEmitter();
 //Główna pętla serwera
 
@@ -126,16 +144,43 @@ app.get('/generate', function (req, res) {
 });
 
 app.get('/main', function (req, res) {
-   	var labels;
+var q = url.parse(req.url, true);
+var dateFrom = simDate(new Date());
+var dateTo = simDate(new Date());
+var temp1 = "on";
+var temp2 = "on";
+var temp3 = "on";
+if(q.search != null && q.search != '' && q.search != undefined){
+	if(q.query["temperature1"] == undefined){
+		temp1 = "off";
+	}
+	if(q.query["temperature2"] == undefined){
+		temp2 = "off";
+	}
+	if(q.query["temperature3"] == undefined){
+		temp3 = "off";
+	}
+	if(q.query["dateFrom"] != undefined){
+		dateFrom = q.query["dateFrom"];
+	}
+	if(q.query["dateTo"] != undefined){
+		dateTo = q.query["dateTo"];
+	}
+}
+console.log(dateFrom);
+console.log(dateTo);
+var labels;
 var labelsResult;
 var temperature1;
 var temperature2;
 var temperature3;
 var people;
 var data_time;
+var temp_min = 200;
+var temp_max = -30;
 	//Wgrywanie strony głównej
 	
-con.query("select * from measurements order by measur_date ASC", function (err, result) {
+con.query("select * from measurements where measur_date BETWEEN \'"+dateFrom+" 00:00:01\' AND \'"+dateTo+" 23:59:59\' order by measur_date ASC", function (err, result) {
     if (err) throw err;
 	labels = '';
 	labelsResult = [];
@@ -146,7 +191,30 @@ con.query("select * from measurements order by measur_date ASC", function (err, 
 	data_time = new Date();
 	var data_index=0;
 	var data_value = 1000000000000;
-	for(var i in result){
+	console.log(result.length);
+	if(result.length>0){
+		if(result.length<=32){
+		for(var i in result){
+		labelsResult.push(result[i]["measur_date"].toString().slice(4,-21));
+		temperature1.push(result[i]["temperature1"]);
+		if(result[i]["temperature1"]<temp_min){temp_min=result[i]["temperature1"];}
+		else if(result[i]["temperature1"]>temp_max){temp_max=result[i]["temperature1"];}
+		temperature2.push(result[i]["temperature2"]);
+		if(result[i]["temperature2"]<temp_min){temp_min=result[i]["temperature2"];}
+		else if(result[i]["temperature2"]>temp_max){temp_max=result[i]["temperature2"];}
+		temperature3.push(result[i]["temperature3"]);
+		if(result[i]["temperature3"]<temp_min){temp_min=result[i]["temperature3"];}
+		else if(result[i]["temperature3"]>temp_max){temp_max=result[i]["temperature3"];}
+		 if(Math.abs(data_time-newDate(result[i]["measur_date"].toString().slice(4,-21)))<data_value){
+			 data_value = Math.abs(data_time-newDate(result[i]["measur_date"].toString().slice(4,-21)));
+			 data_index = i;
+		 };
+
+	}
+	}
+	else{
+		var k = Math.floor(result.length/32);
+		for(var i=0;i<result.length;i=i+k){
 		labelsResult.push(result[i]["measur_date"].toString().slice(4,-21));
 		temperature1.push(result[i]["temperature1"]);
 		temperature2.push(result[i]["temperature2"]);
@@ -157,8 +225,12 @@ con.query("select * from measurements order by measur_date ASC", function (err, 
 		 };
 
 	}
-	console.log(result[i]["measur_date"]);
+		
+	}
 	var temper = (result[data_index]["temperature1"]+result[data_index]["temperature2"]+result[data_index]["temperature3"])/3;
+	}
+	
+	
 	     for(i in labelsResult){
 	  labels=labels+'\''+labelsResult[i]+'\',';
   }
@@ -170,19 +242,42 @@ con.query("select * from measurements order by measur_date ASC", function (err, 
 		  }
 	  }
 	  fs.readFile('index.html', 'utf-8', function (err, data) {
+		  console.log("Temp1: "+temperature1);
+		console.log("Temp2: "+temperature2);
+		console.log("Temp3: "+temperature3);
+		console.log("DateTo: "+dateTo);
+		console.log("DateFrom: "+dateFrom);
         //response.writeHead(200, { 'Content-Type': 'text/html' });
 		data=data.replace('XLABELSX', labels);
-		var datasets = '';
+		if(result.length>0){
+			var datasets = '';
 		var dataset = "{borderColor: 'rgba(255, 0, 0, 0.5)',backgroundColor: 'rgba(0, 0, 0, 0)', label: 'Temperature1',data: [XDATAX]}";
-		datasets = datasets+dataset.replace("XDATAX",temperature1.toString())+',';
-		dataset = "{borderColor: 'rgba(0, 255, 0, 0.5)',backgroundColor: 'rgba(0, 0, 0, 0)',label: 'Temperature2',data: [XDATAX]}";
-		datasets = datasets+dataset.replace("XDATAX",temperature2.toString())+',';
+		if(temp1 == "on"){
+			datasets = datasets+dataset.replace("XDATAX",temperature1.toString())+',';
+		}
+	  dataset = "{borderColor: 'rgba(0, 255, 0, 0.5)',backgroundColor: 'rgba(0, 0, 0, 0)',label: 'Temperature2',data: [XDATAX]}";
+		if(temp2=="on"){datasets = datasets+dataset.replace("XDATAX",temperature2.toString())+',';}
 		dataset = "{borderColor: 'rgba(0, 0, 255, 0.5)',backgroundColor: 'rgba(0, 0, 0, 0)',label: 'Temperature3',data: [XDATAX]}";
-		datasets = datasets+dataset.replace("XDATAX",temperature3.toString())+',';
+		if(temp3=="on"){
+			datasets = datasets+dataset.replace("XDATAX",temperature3.toString())+',';
+		}
 		data = data.replace('XDATASETSX', datasets);
+		data = data.replace('XMINX', (temp_min-1).toString());
+		data = data.replace('XMAXX', (temp_max+1).toString());
 		data = data.replace('XPEOPLEX',people.toString());
-		data = data.replace('XTEMPERATUREX',temper.toString());
-		data = data.replace('XFIREX',result[data_index]["smoke_sensor"].toString());
+		data = data.replace('XTEMPERATUREX',(Math.round(temper*10)/10).toString());
+		if(result[data_index]["smoke_sensor"]==0){data = data.replace('XFIREX','Good');}
+		else{data = data.replace('XFIREX','Bad');}
+		}
+		else{
+			data = data.replace('XDATASETSX', '');
+		data = data.replace('XPEOPLEX','0');
+		data = data.replace('XTEMPERATUREX',"Unknown");
+		data = data.replace('XFIREX','Unknown');
+		data = data.replace('XMINX', 20);
+		data = data.replace('XMAXX', 25);
+		}
+		
         res.send(data);
     });
   });

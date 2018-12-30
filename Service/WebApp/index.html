@@ -8,38 +8,21 @@ table.statistic {
   border: 1px solid black;
   border-collapse: collapse;
 }
+
 </style>
   <title>OfCon</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
   <link rel="stylesheet" type="text/css" href="style.css">
   <link rel="icon" type="image/png" href="http://localhost:8081/images/favicon-16x16.png" sizes="16x16" />
 </head>
-<body style="background-color:#CFD8DC;">
-<div>
-<h1 style="color:#212121;text-align:center;"><img src="http://localhost:8081/images/logo.jpg" alt="Logo" width="50" height="50" style="float:left;width:42px;height:42px;">OfCon - Statistic Data Panel</h1>
+<body style="background-color:#CFD8DC;font-family:trebuchet MS">
+<div style="margin:70px">
+<img src="http://localhost:8081/images/logo.jpg" alt="Logo" width="50" height="100" style="float:left;width:42px;height:42px;">
+<h1 style="color:#212121;text-align:left;margin-left:30px;font-family:arial">     OfCon - Statistical Data Panel</h1>
 <hr>
 </div>
-<br>
-<table class="statistic"  style="width:50%;margin:35px">
-  <tr class="statistic">
-    <th class="statistic">Statistic Name</th>
-    <th class="statistic">Statistic Value</th> 
-  </tr>
-  <tr class="statistic" title="Avarage temperature in room at the moment.">
-    <td class="statistic">Current Temperature</td>
-    <td class="statistic">XTEMPERATUREX</td> 
-  </tr>
-  <tr class="statistic" title="How many workers in room at the moment." >
-    <td class="statistic">Amount people in office</td>
-    <td class="statistic">XPEOPLEX</td> 
-  </tr>
-  <tr class="statistic" title="Fire alert." style="color:#212121;">
-    <td class="statistic">Fire</td>
-    <td class="statistic">XFIREX</td> 
-  </tr>
-
-</table>
-<canvas   id="myChart" width = "700" height="300"  style="border:1px solid #000000;margin:35px"></canvas>
+<div style="margin:70px">
+<canvas   id="myChart" width = "700" height="300"  style="border:1px solid #000000;"></canvas>
     <script>
 		var ctx = document.getElementById('myChart').getContext('2d');
 var myChart = new Chart(ctx, {
@@ -52,8 +35,8 @@ var myChart = new Chart(ctx, {
         scales: {
             yAxes: [{
                 ticks: {
-                    min: 18,
-                    max: 28
+                    min: XMINX,
+                    max: XMAXX
                 }
             }]
         },
@@ -62,26 +45,22 @@ var myChart = new Chart(ctx, {
 });
 
 </script>
+<br>
 <form action="http://localhost:8081/main" method="GET">
-<table style="margin:35px;border: 1px solid black;"> 
+<table style="border: 1px solid black;display: inline-block;width:350;margin-right:15px;"> 
   <tr>
     <th>Genereting custom chart</th>
+
+  <tr>
+    <td><input type="checkbox" name="temperature1"> Temperature #1<br></td>
+    <td><input type="checkbox" name="temperature2"> Temperature #2<br></td> 
   </tr>
   <tr>
-    <td><input type="checkbox" name="temperature1"> Temperature1<br></td>
-    <td><input type="checkbox" name="temperature2"> Temperature2<br></td> 
-  </tr>
-  <tr>
-    <td><input type="checkbox" name="temperature3"> Temperature3<br></td>
-    <td><input type="checkbox" name="people"> people<br></td> 
+    <td><input type="checkbox" name="temperature3"> Temperature #3<br></td>
   </tr>
   <tr  >
-    <td>From</td>
-	<td>To</td>
-  </tr>
-    <tr  >
-    <td>From</td>
-	<td>To</td>
+    <td> From</td>
+	<td> To</td>
   </tr>
   <tr  >
     <td><input type="date" name="dateFrom"></td>
@@ -89,11 +68,30 @@ var myChart = new Chart(ctx, {
   </tr>
   <tr  >
     <td><br></td>
-	<td>
-      <button>Generate chart</button>
+	<td align="right">
+      <button >Generate chart</button>
     </td>
   </tr>
 </form>
+</table>
+<table class="statistic"  style="width:445;display:inline-block;">
+  <tr class="statistic">
+    <th class="statistic">Statistics Name</th>
+    <th class="statistic">Statistics Value</th> 
+  </tr>
+  <tr class="statistic" title="Avarage temperature in room at the moment.">
+    <td class="statistic"><p style="margin-left:5px">Current Temperature</p></td>
+    <td class="statistic"><p style="margin-left:5px">XTEMPERATUREX</p></td> 
+  </tr>
+  <tr class="statistic" title="How many workers in room at the moment." >
+    <td class="statistic"><p style="margin-left:5px">No.of people in the office</p></td>
+    <td class="statistic"><p style="margin-left:5px">XPEOPLEX</p></td> 
+  </tr>
+  <tr class="statistic" title="Fire alert." style="color:#212121;">
+    <td class="statistic"><p style="margin-left:5px">Air Quality</p></td>
+    <td class="statistic"><p style="margin-left:5px">XFIREX</p></td> 
+  </tr>
+
 </table>
 </body>
 </html>
