@@ -51,7 +51,6 @@ if os.path.exists("priv_key.pem") == False:
   print("[ INFO ] Server not found RSA keys. Generate new one.")
   logging.info('Server not found RSA keys. Generate new one.')
   random_generator = Random.new().read
-  #myKey = RSA.generate(1024, random_generator)
   myKey = RSA.generate(4096, random_generator)
   f = open('priv_key.pem', 'wb')
   f.write(myKey.exportKey('PEM'))
@@ -96,15 +95,7 @@ class SrvHandler(threading.Thread):
         self.clientAddr = clientAddr
 
     def run(self):
-        # loopControl = True
-        # while(loopControl):
         recvData = recv_until(self.clientSock, "\r\n\r\n", 102400) #102400 == 100KB
-        # if(recvData == False):
-        #     print("[ WARNING ] TERMINATED CONNECTION")
-        #     logging.error("TERMINATED CONNECTION")
-        #     loopControl = False
-        #     continue
-
         if(recvData != False):
             usrid, scode, rdata = recvData.split("$$$")
             test_code_value = False
@@ -139,9 +130,6 @@ class SrvHandler(threading.Thread):
                   if(valFlag == False):
                       f = open('publ_client_keys.dd', 'a')
                       str_publicKeyAndroid = publicKeyAndroid.exportKey('PEM').decode('utf-8')
-                      # str_publicKeyAndroid = str_publicKeyAndroid.replace('-----BEGIN PUBLIC KEY-----', '')
-                      # str_publicKeyAndroid = str_publicKeyAndroid.replace('-----END PUBLIC KEY-----', '')
-                      # str_publicKeyAndroid = str_publicKeyAndroid.replace('\n', '')
                       f.write("User: %s\n%s\n" % (usrid, str_publicKeyAndroid))
                       f.close()
                       clientRSA_PublicKeys[usrid] = publicKeyAndroid
@@ -184,14 +172,17 @@ class SrvHandler(threading.Thread):
                           enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
                           sendData =  str(usrid) + "$$$103$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
                           self.clientSock.sendall(sendData.encode("utf-8"))
+
                           #
                           #SEND to RPi3 info to open door
                           #
+
                           print('[ INFO ] Update ENTER User: ', usrid, ' status in room.')
                           logging.info("Update ENTER User: " + str(usrid) + " status in room.")
                           sqlTask = "UPDATE `users` SET status_in_room=%s WHERE name=%s"
                           curDB.execute(sqlTask, (1, result[1]))
                           connDB.commit()
+
                           print('[ INFO ] Update ENTER User: ', usrid, ' time in room.')
                           logging.info("Update ENTER User: " + str(usrid) + " time in room.")
                           sqlTask = "INSERT INTO `user_times` (`user_id`, `start_time`) VALUES(%s, %s)"
@@ -227,19 +218,18 @@ class SrvHandler(threading.Thread):
                            enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
                            sendData =  str(usrid) + "$$$104$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
                            self.clientSock.sendall(sendData.encode("utf-8"))
-                          # sqlTask = "UPDATE `users` SET status_in_room=%s WHERE name=%s"
-                          # curDB.execute(sqlTask, (0, result[1]))
-                          # connDB.commit()
-                          print('[ INFO ] Update EXIT User: ', usrid, ' status in room.')
-                          logging.info("Update EXIT User: " + str(usrid) + " status in room.")
-                          sqlTask = "UPDATE `users` SET status_in_room=%s WHERE name=%s"
-                          curDB.execute(sqlTask, (0, result[1]))
-                          connDB.commit()
-                          print('[ INFO ] Update EXIT User: ', usrid, ' time in room.')
-                          logging.info("Update EXIT User: " + str(usrid) + " time in room.")
-                          sqlTask = "UPDATE `user_times` SET `end_time`=%s WHERE user_id=%s AND end_time=%s"
-                          curDB.execute(sqlTask, (strftime("%Y-%m-%d %H:%M:%S", gmtime()), userIDdb, None))
-                          connDB.commit()
+
+                           print('[ INFO ] Update EXIT User: ', usrid, ' status in room.')
+                           logging.info("Update EXIT User: " + str(usrid) + " status in room.")
+                           sqlTask = "UPDATE `users` SET status_in_room=%s WHERE name=%s"
+                           curDB.execute(sqlTask, (0, result[1]))
+                           connDB.commit()
+
+                           print('[ INFO ] Update EXIT User: ', usrid, ' time in room.')
+                           logging.info("Update EXIT User: " + str(usrid) + " time in room.")
+                           sqlTask = "UPDATE `user_times` SET `end_time`=%s WHERE user_id=%s AND end_time=%s"
+                           curDB.execute(sqlTask, (strftime("%Y-%m-%d %H:%M:%S", gmtime()), userIDdb, None))
+                           connDB.commit()
                   else:
                        print('[ WARNING ] CODE 104 Problem with no User: ', usrid)
                        logging.warning("CODE 104 Problem with no User: " + str(usrid))
@@ -266,11 +256,12 @@ class SrvHandler(threading.Thread):
                             sqlTask = "SELECT * FROM `measurements` ORDER BY `measur_date` DESC LIMIT 1"
                             curDB.execute(sqlTask, (time1, time2))
                             result = curDB.fetchone()
+                            measure_time = result[1]
                             temp1 = result[2]
                             temp2 = result[3]
                             temp3 = result[4]
                             smoke = result[5]
-                            sqlData += str(temp1) + "$$$" + str(temp2) + "$$$" + str(temp3) + "$$$" + str(smoke)
+                            sqlData += str(measure_time) + "$$$" + str(temp1) + "$$$" + str(temp2) + "$$$" + str(temp3) + "$$$" + str(smoke)
                             messg = sqlData.encode('utf-8')
                             enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
                             sendData = str(usrid) + "$$$105$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
@@ -280,11 +271,6 @@ class SrvHandler(threading.Thread):
                       logging.warning("CODE 105 Problem with no User: " + str(usrid))
                       messg = "$$$105$$$DATA$$$NO_USER".encode('utf-8')
                       self.clientSock.sendall(messg)
-              # elif(code == 106):
-              #     loopControl = False
-              #     print("[ INFO ] DISCONNECTION WITH ", usrid)
-              #     logging.info("DISCONNECTION WITH " + str(usrid))
-              #     continue
               elif(code == 201):
                 print("[ INFO ] TEST CONNECTION WITH ", usrid, " RECIVE: ", rdata.replace('\r\n\r\n', ''))
                 messg =  str(usrid) + "$$$202$$$DATA$$$" + "SERV_OK"
@@ -315,24 +301,19 @@ def main():
   print("[ INFO ] MobileServiceServer v0.4")
   print("[ INFO ] Server start at: ", strftime("%Y-%m-%d %H:%M:%S", gmtime()))
   logging.info("Server start at: " + str(strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-  #Get server IP
   ip_server = ni.ifaddresses(NET_DEVICE_INTERFACE)[ni.AF_INET][0]['addr']
   print("[ INFO ] IP: ",ip_server," PORT: ",SERVER_PORT, " DEV: ", NET_DEVICE_INTERFACE)
-  #TCP
   server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
   server.bind((ip_server, SERVER_PORT))
-  #Max connection in queue
   server.listen(MAX_CONNECTIONS_IN_QUEUE)
-
   try:
     while True:
       clientSock, clientAddr = server.accept()
-      #clientHostname = socket.gethostbyaddr(clientAddr[0])[0]
       print("[ INFO ] Connection from: ", clientAddr);
       logging.info('Connection from: ' + str(clientAddr))
       clientThread = SrvHandler(clientSock, clientAddr)
-      clientThread.daemon = False #When kill main process, then it kill threads
+      clientThread.daemon = False
       clientThread.start()
   except KeyboardInterrupt:
     print("[ Keyboard Interrupt ] Close server\n")
