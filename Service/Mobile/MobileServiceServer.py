@@ -178,28 +178,36 @@ class SrvHandler(threading.Thread):
                       else:
                           print('[ INFO ] User: ', usrid, ' enter to room.')
                           logging.info("User: " + str(usrid) + " enter to room")
-                          messg = "ENTER".encode('utf-8')
+                          flagDoor = False
+                          HOSTRPI3 = '192.168.88.248'
+                          PORTRPI3 = 7755
+                          try:
+                              with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                                  s.connect((HOSTRPI3, PORTRPI3))
+                                  s.sendall("OPEN$".encode('utf-8'))
+                          except:
+                              print("[ ERROR ] Cannot open door")
+                              logging.error("Cannot open door")
+                              flagDoor = True
+                          messg = ''
+                          if (flagDoor == False):
+                              messg = "ENTER"
+                              print('[ INFO ] Update ENTER User: ', usrid, ' status in room.')
+                              logging.info("Update ENTER User: " + str(usrid) + " status in room.")
+                              sqlTask = "UPDATE `users` SET status_in_room=%s WHERE name=%s"
+                              curDB.execute(sqlTask, (1, result[1]))
+                              connDB.commit()
+                              print('[ INFO ] Update ENTER User: ', usrid, ' time in room.')
+                              logging.info("Update ENTER User: " + str(usrid) + " time in room.")
+                              sqlTask = "INSERT INTO `user_times` (`user_id`, `start_time`) VALUES(%s, %s)"
+                              curDB.execute(sqlTask, (userIDdb, strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+                              connDB.commit()
+                          else:
+                              messg = "FAILED"
+                          messg = messg.encode('utf-8')
                           enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
                           sendData =  str(usrid) + "$$$103$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
                           self.clientSock.sendall(sendData.encode("utf-8"))
-
-                          HOSTRPI3 = '192.168.88.248'
-                          PORTRPI3 = 7755
-                          with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                              s.connect((HOSTRPI3, PORTRPI3))
-                              s.sendall("OPEN$$".encode('utf-8'))
-
-                          print('[ INFO ] Update ENTER User: ', usrid, ' status in room.')
-                          logging.info("Update ENTER User: " + str(usrid) + " status in room.")
-                          sqlTask = "UPDATE `users` SET status_in_room=%s WHERE name=%s"
-                          curDB.execute(sqlTask, (1, result[1]))
-                          connDB.commit()
-
-                          print('[ INFO ] Update ENTER User: ', usrid, ' time in room.')
-                          logging.info("Update ENTER User: " + str(usrid) + " time in room.")
-                          sqlTask = "INSERT INTO `user_times` (`user_id`, `start_time`) VALUES(%s, %s)"
-                          curDB.execute(sqlTask, (userIDdb, strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-                          connDB.commit()
                   else:
                       print('[ WARNING ] CODE 103 Problem with User: ', usrid)
                       logging.warning("CODE 103 Problem with User: " + str(usrid))
@@ -276,7 +284,7 @@ class SrvHandler(threading.Thread):
                             temp2 = result[3]
                             temp3 = result[4]
                             smoke = result[5]
-                            sqlData = str(measure_time).split(" ")[0] + "$$$" + str(measure_time).split(" ")[1] + "$$$Temperatura1$$$" + str(temp1) + "$$$Temperatura2$$$" + str(temp2) + "$$$Temperatura3$$$" + str(temp3) + "$$$Dym$$$" + str(smoke)
+                            sqlData = str(measure_time).split(" ")[0] + "$$$" + str(measure_time).split(" ")[1] + "$$$Temperatura1$$$" + str(temp1) + "$$$Temperatura2$$$" + str(temp2) + "$$$Temperatura3$$$" + str(temp3) + "$$$Air$$$" + str(smoke)
                             messg = sqlData.encode('utf-8')
                             enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
                             sendData = str(usrid) + "$$$105$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
