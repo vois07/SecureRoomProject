@@ -138,11 +138,14 @@ class SrvHandler(threading.Thread):
                           curDB.execute(sqlTask, (usrid))
                           connDB.commit()
                           print("[ INFO ] Add user: ", usrid)
+                          logging.info('Add user: ' + str(usrid))
                       except:
                           print("[ INFO ] Problem with add user: ", usrid)
+                  else:
+                      print("[ INFO ] User: ", usrid, " is in db.")
+                      logging.info('User: ' + str(usrid) + " is in db.")
                   messg = str(usrid) + "$$$102$$$DATA$$$OK"
                   self.clientSock.sendall(messg.encode("utf-8"))
-                  logging.info('Add user: ' + str(usrid))
                 except:
                   print("[ WARNING ] Exception on code 102")
                   logging.warning('Exception on code 102')
