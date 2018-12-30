@@ -162,18 +162,18 @@ class SrvHandler(threading.Thread):
                   self.clientSock.sendall(messg.encode("utf-8"))
               # Ask to enter to the room
               elif(code == 103):
-                  # strftime("%Y-%m-%d %H:%M:%S", gmtime())
                   print("[ INFO ] User: ", usrid, ' ask to enter room')
                   logging.info('User: ' + str(usrid) + ' ask to enter room')
                   sqlTask = "SELECT * FROM `users` WHERE `name`=%s"
                   curDB.execute(sqlTask, (usrid))
                   result = curDB.fetchone()
                   if(type(result) is tuple):
+                      userIDdb = result[0]
                       bitvalue = result[3]
                       if(bitvalue == None):
                           print('[ WARNING ] CODE 103 Problem with User: ', usrid, ' no bit_confirm set.')
                           logging.warning("CODE 103 Problem with User: " + str(usrid) + " no bit_confirm set.")
-                          messg = "NO_BIT".encode('utf-8')
+                          messg = "NO_ACCESS".encode('utf-8')
                           enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
                           sendData =  str(usrid) + "$$$103$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
                           self.clientSock.sendall(sendData.encode("utf-8"))
@@ -186,15 +186,22 @@ class SrvHandler(threading.Thread):
                           self.clientSock.sendall(sendData.encode("utf-8"))
                           #
                           #SEND to RPi3 info to open door
+                          #
+                          print('[ INFO ] Update ENTER User: ', usrid, ' status in room.')
+                          logging.info("Update ENTER User: " + str(usrid) + " status in room.")
                           sqlTask = "UPDATE `users` SET status_in_room=%s WHERE name=%s"
                           curDB.execute(sqlTask, (1, result[1]))
+                          connDB.commit()
+                          print('[ INFO ] Update ENTER User: ', usrid, ' time in room.')
+                          logging.info("Update ENTER User: " + str(usrid) + " time in room.")
+                          sqlTask = "INSERT INTO `user_times` (`user_id`, `start_time`) VALUES(%s, %s)"
+                          curDB.execute(sqlTask, (userIDdb, strftime("%Y-%m-%d %H:%M:%S", gmtime())))
                           connDB.commit()
                   else:
                       print('[ WARNING ] CODE 103 Problem with User: ', usrid)
                       logging.warning("CODE 103 Problem with User: " + str(usrid))
                       messg = "NO_USER".encode('utf-8')
-                      enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
-                      sendData =  str(usrid) + "$$$103$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
+                      sendData =  str(usrid) + "$$$103$$$DATA$$$" + str(base64.b64encode(messg))
                       self.clientSock.sendall(sendData.encode("utf-8"))
               # Ask to exit the room
               elif(code == 104):
@@ -204,12 +211,40 @@ class SrvHandler(threading.Thread):
                   curDB.execute(sqlTask, (usrid))
                   result = curDB.fetchone()
                   if(type(result) is tuple):
-                      print()
-                      # sqlTask = "UPDATE `users` SET status_in_room=%s WHERE name=%s"
-                      # curDB.execute(sqlTask, (0, result[1]))
-                      # connDB.commit()
+                      userIDdb = result[0]
+                      bitvalue = result[3]
+                      if(bitvalue == None):
+                          print('[ WARNING ] CODE 104 Problem with User: ', usrid, ' no bit_confirm set.')
+                          logging.warning("CODE 104 Problem with User: " + str(usrid) + " no bit_confirm set.")
+                          messg = "NO_ACCESS".encode('utf-8')
+                          enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
+                          sendData =  str(usrid) + "$$$104$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
+                          self.clientSock.sendall(sendData.encode("utf-8"))
+                      else:
+                           print('[ INFO ] User: ', usrid, ' EXIT room.')
+                           logging.info("User: " + str(usrid) + " EXIT room")
+                           messg = "EXIT".encode('utf-8')
+                           enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
+                           sendData =  str(usrid) + "$$$104$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
+                           self.clientSock.sendall(sendData.encode("utf-8"))
+                          # sqlTask = "UPDATE `users` SET status_in_room=%s WHERE name=%s"
+                          # curDB.execute(sqlTask, (0, result[1]))
+                          # connDB.commit()
+                          print('[ INFO ] Update EXIT User: ', usrid, ' status in room.')
+                          logging.info("Update EXIT User: " + str(usrid) + " status in room.")
+                          sqlTask = "UPDATE `users` SET status_in_room=%s WHERE name=%s"
+                          curDB.execute(sqlTask, (0, result[1]))
+                          connDB.commit()
+                          print('[ INFO ] Update EXIT User: ', usrid, ' time in room.')
+                          logging.info("Update EXIT User: " + str(usrid) + " time in room.")
+                          sqlTask = "UPDATE `user_times` SET `end_time`=%s WHERE user_id=%s AND end_time=%s"
+                          curDB.execute(sqlTask, (strftime("%Y-%m-%d %H:%M:%S", gmtime()), userIDdb, None))
+                          connDB.commit()
                   else:
-                      print()
+                       print('[ WARNING ] CODE 104 Problem with no User: ', usrid)
+                       logging.warning("CODE 104 Problem with no User: " + str(usrid))
+                       messg = (str(usrid) + "$$$104$$$DATA$$$NO_USER").encode('utf-8')
+                       self.clientSock.sendall(messg)
               # Send data to Android's user
               elif(code == 105):
                   print("[ INFO ] User: ", usrid, ' ask for data from DB')
@@ -243,9 +278,8 @@ class SrvHandler(threading.Thread):
                   else:
                       print('[ WARNING ] CODE 105 Problem with no User: ', usrid)
                       logging.warning("CODE 105 Problem with no User: " + str(usrid))
-                      messg = "NO_USER".encode('utf-8')
-                      sendData = str(usrid) + "$$$105$$$DATA$$$" + str(base64.b64encode(messg))
-                      self.clientSock.sendall(sendData.encode("utf-8"))
+                      messg = "$$$105$$$DATA$$$NO_USER".encode('utf-8')
+                      self.clientSock.sendall(messg)
               # elif(code == 106):
               #     loopControl = False
               #     print("[ INFO ] DISCONNECTION WITH ", usrid)
