@@ -4,6 +4,9 @@ var url = require('url');
 var events = require('events');
 var mysql = require('mysql');
 var fs = require('fs');
+var express = require('express');
+var app = express();
+app.use(express.static('public'));
 
 
 //Dane bazy danych
@@ -110,8 +113,16 @@ function newDate(x){
 
 var eventEmitter = new events.EventEmitter();
 //Główna pętla serwera
-http.createServer(function (req, response) {
-var labels;
+
+var server = app.listen(8081, function () {
+   var host = server.address().address
+   var port = server.address().port
+   
+   console.log("Example app listening at http://%s:%s", host, port)
+})
+
+app.get('/main', function (req, res) {
+   	var labels;
 var labelsResult;
 var temperature1;
 var temperature2;
@@ -155,7 +166,7 @@ con.query("select * from measurements order by measur_date ASC", function (err, 
 		  }
 	  }
 	  fs.readFile('index.html', 'utf-8', function (err, data) {
-        response.writeHead(200, { 'Content-Type': 'text/html' });
+        //response.writeHead(200, { 'Content-Type': 'text/html' });
 		data=data.replace('XLABELSX', labels);
 		var datasets = '';
 		var dataset = "{borderColor: 'rgba(255, 0, 0, 0.5)',backgroundColor: 'rgba(0, 0, 0, 0)', label: 'Temperature1',data: [XDATAX]}";
@@ -168,13 +179,17 @@ con.query("select * from measurements order by measur_date ASC", function (err, 
 		data = data.replace('XPEOPLEX',people.toString());
 		data = data.replace('XTEMPERATUREX',temper.toString());
 		data = data.replace('XFIREX',result[data_index]["smoke_sensor"].toString());
-        response.write(data);
-        response.end();
+        res.send(data);
     });
   });
   
   
   });
+  })
+/*
+http.createServer(function (req, response) {
+
+
  
 	
 
@@ -234,5 +249,6 @@ eventEmitter.emit('scream');
 
 
 
-
+/*
 }).listen(8080);
+*/

@@ -1,15 +1,63 @@
 <html>
 <head>
-  <title>Wykres</title>
+<style>
+table.statistic {
+  border-collapse: collapse;
+}
+ th.statistic, td.statistic {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+</style>
+  <title>OfCon</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
   <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="icon" type="image/png" href="http://localhost:8081/images/favicon-16x16.png" sizes="16x16" />
 </head>
-<body>
-<p>Current Temperature: XTEMPERATUREX</p>
-<p>Fire: XFIREX</p>
-<p>Amount people in office: XPEOPLEX</p>
+<body style="background-color:#CFD8DC;">
+<div>
+<h1 style="color:#212121;text-align:center;"><img src="http://localhost:8081/images/logo.jpg" alt="Logo" width="50" height="50" style="float:left;width:42px;height:42px;">OfCon - Statistic Data Panel</h1>
+<hr>
+</div>
+<br>
+<table class="statistic" align="right" style="width:50%;">
+  <tr>
+    <th>Linie na wykresie</th>
+  </tr>
+  <tr>
+    <td><input type="checkbox" name="checkbox1" value="true"> Temperature1<br></td>
+    <td><input type="checkbox" name="checkbox2" value="true"> Temperature2<br></td> 
+  </tr>
+  <tr>
+    <td><input type="checkbox" name="checkbox3" value="true"> Temperature3<br></td>
+    <td><input type="checkbox" name="checkbox4" value="true"> Dym<br></td> 
+  </tr>
+  <tr  >
+    <td><input type="checkbox" name="checkbox1" value="true"> People<br></td>
+  </tr>
+   <tr>
+    <td><br></td>
+  </tr>
+  <tr class="statistic">
+    <th class="statistic">Statistic Name</th>
+    <th class="statistic">Statistic Value</th> 
+  </tr>
+  <tr class="statistic" title="Avarage temperature in room at the moment.">
+    <td class="statistic">Current Temperature</td>
+    <td class="statistic">XTEMPERATUREX</td> 
+  </tr>
+  <tr class="statistic" title="How many workers in room at the moment." >
+    <td class="statistic">Amount people in office</td>
+    <td class="statistic">XPEOPLEX</td> 
+  </tr>
+  <tr class="statistic" title="Fire alert." style="color:#212121;">
+    <td class="statistic">Fire</td>
+    <td class="statistic">XFIREX</td> 
+  </tr>
 
-<canvas id="myChart" width="20" height="10"></canvas>
+</table>
+<div style="width:50%">
+<canvas align="left" id="myChart" width = "700" height="300"  style="border:1px solid #000000"></canvas>
     <script>
 		var ctx = document.getElementById('myChart').getContext('2d');
 var myChart = new Chart(ctx, {
@@ -22,13 +70,18 @@ var myChart = new Chart(ctx, {
         scales: {
             yAxes: [{
                 ticks: {
-                    min: 10,
-                    max: 30
+                    min: 18,
+                    max: 28
                 }
             }]
-        }
+        },
+		responsive: false
     }
 });
+   
+    //ctx.height = window.innerHeight*0.5;
+
 </script>
+</div>
 </body>
 </html>
