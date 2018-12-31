@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">OfCon</string>
+    <string name="content_desc">no desc</string>
+    <string name="name">Imię</string>
+    <string name="surname">Nazwisko</string>
+    <string name="register">Zarejestruj</string>
+    <string name="user">Użytkownik</string>
+    <string name="start_work">Otwórz drzwi / \nRozpocznij pracę</string>
+    <string name="end_work">Otwórz drzwi / \nZakończ pracę</string>
+    <string name="def_time">00:00:00</string>
+</resources>
