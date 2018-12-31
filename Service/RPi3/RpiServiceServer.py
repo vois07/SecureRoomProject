@@ -8,7 +8,7 @@ import threading
 import telnetlib
 import netifaces as ni
 import pymysql
-from time import gmtime, strftime
+from time import localtime, strftime
 
 MAX_CONNECTIONS_IN_QUEUE = 5
 SERVER_PORT = 7133
@@ -52,7 +52,7 @@ class SrvHandler(threading.Thread):
     def run(self):
         recvData = recv_until(self.clientSock, "%&", 102400) #102400 == 100KB
         if(recvData != False):
-            timeMeasure = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+            timeMeasure = strftime("%Y-%m-%d %H:%M:%S", localtime())
             temp1 = 0
             temp2 = 0
             temp3 = 0
@@ -79,7 +79,7 @@ class SrvHandler(threading.Thread):
 
 def main():
   print("[ INFO ] RpiServiceServer v0.2")
-  print("[ INFO ] Server start at: ", strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+  print("[ INFO ] Server start at: ", strftime("%Y-%m-%d %H:%M:%S", localtime()))
   #Get server IP
   ip_server = ni.ifaddresses(NET_DEVICE_INTERFACE)[ni.AF_INET][0]['addr']
   print("[ INFO ] IP: ",ip_server," PORT: ",SERVER_PORT, " DEV: ", NET_DEVICE_INTERFACE)

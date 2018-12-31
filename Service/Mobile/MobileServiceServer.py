@@ -12,7 +12,7 @@ from Crypto.PublicKey import RSA
 from Crypto import Random
 import logging
 import time
-from time import gmtime, strftime
+from time import localtime, strftime
 import pymysql
 
 # ********* CONNECT TO MySQL ***********************
@@ -197,10 +197,10 @@ class SrvHandler(threading.Thread):
                               sqlTask = "UPDATE `users` SET status_in_room=%s WHERE name=%s"
                               curDB.execute(sqlTask, (1, result[1]))
                               connDB.commit()
-                              print('[ INFO ] Update ENTER User: ', usrid, ' time in room.')
-                              logging.info("Update ENTER User: " + str(usrid) + " time in room.")
+                              print('[ INFO ] Update ENTER User: ', usrid, ' time in room: ', strftime("%Y-%m-%d %H:%M:%S", localtime()))
+                              logging.info("Update ENTER User: " + str(usrid) + " time in room: " + str(strftime("%Y-%m-%d %H:%M:%S", localtime())))
                               sqlTask = "INSERT INTO `user_times` (`user_id`, `start_time`) VALUES(%s, %s)"
-                              curDB.execute(sqlTask, (userIDdb, strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+                              curDB.execute(sqlTask, (userIDdb, strftime("%Y-%m-%d %H:%M:%S", localtime())))
                               connDB.commit()
                           else:
                               messg = "FAILED"
@@ -216,8 +216,8 @@ class SrvHandler(threading.Thread):
                       self.clientSock.sendall(sendData.encode("utf-8"))
               # Ask to exit the room
               elif(code == 104):
-                  print("[ INFO ] User: ", usrid, ' leave room')
-                  logging.info('User: ' + str(usrid) + ' leave room')
+                  print("[ INFO ] User: ", usrid, ' EXIT room')
+                  logging.info('User: ' + str(usrid) + ' EXIT room')
                   sqlTask = "SELECT * FROM `users` WHERE `name`=%s"
                   curDB.execute(sqlTask, (usrid))
                   connDB.commit()
@@ -233,8 +233,6 @@ class SrvHandler(threading.Thread):
                           sendData =  str(usrid) + "$$$104$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
                           self.clientSock.sendall(sendData.encode("utf-8"))
                       else:
-                           print('[ INFO ] User: ', usrid, ' EXIT room.')
-                           logging.info("User: " + str(usrid) + " EXIT room")
                            flagDoor = False
                            # HOSTRPI3 = '192.168.88.248'
                            # PORTRPI3 = 7755
@@ -254,10 +252,16 @@ class SrvHandler(threading.Thread):
                                 curDB.execute(sqlTask, (0, result[1]))
                                 connDB.commit()
 
-                                print('[ INFO ] Update EXIT User: ', usrid, ' time in room.')
-                                logging.info("Update EXIT User: " + str(usrid) + " time in room.")
-                                sqlTask = "UPDATE `user_times` SET `end_time`=%s WHERE user_id=%s AND end_time=%s"
-                                curDB.execute(sqlTask, (strftime("%Y-%m-%d %H:%M:%S", gmtime()), userIDdb, None))
+                                sqlTask = "SELECT * FROM user_times WHERE user_id=%s AND end_time IS NULL"
+                                curDB.execute(sqlTask, userIDdb)
+                                connDB.commit()
+                                result = curDB.fetchone()
+                                sartTimeUsr = result[2]
+
+                                print('[ INFO ] Update EXIT User: ', usrid, ' time in room: ', strftime("%Y-%m-%d %H:%M:%S", localtime()))
+                                logging.info("Update EXIT User: " + str(usrid) + " time in room: " + str(strftime("%Y-%m-%d %H:%M:%S", localtime())))
+                                sqlTask = "UPDATE user_times SET start_time=%s, end_time=%s WHERE user_id=%s AND end_time IS NULL"
+                                curDB.execute(sqlTask, (sartTimeUsr, strftime("%Y-%m-%d %H:%M:%S", localtime()), userIDdb))
                                 connDB.commit()
 
                            else:
@@ -337,8 +341,8 @@ class SrvHandler(threading.Thread):
 
 def main():
   print("[ INFO ] MobileServiceServer v0.4")
-  print("[ INFO ] Server start at: ", strftime("%Y-%m-%d %H:%M:%S", gmtime()))
-  logging.info("Server start at: " + str(strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+  print("[ INFO ] Server start at: ", strftime("%Y-%m-%d %H:%M:%S", localtime()))
+  logging.info("Server start at: " + str(strftime("%Y-%m-%d %H:%M:%S", localtime())))
   ip_server = ni.ifaddresses(NET_DEVICE_INTERFACE)[ni.AF_INET][0]['addr']
   print("[ INFO ] IP: ",ip_server," PORT: ",SERVER_PORT, " DEV: ", NET_DEVICE_INTERFACE)
   server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
