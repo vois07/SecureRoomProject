@@ -179,16 +179,16 @@ class SrvHandler(threading.Thread):
                           print('[ INFO ] User: ', usrid, ' enter to room.')
                           logging.info("User: " + str(usrid) + " enter to room")
                           flagDoor = False
-                          # HOSTRPI3 = '192.168.88.248'
-                          # PORTRPI3 = 7755
-                          # try:
-                          #     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                          #         s.connect((HOSTRPI3, PORTRPI3))
-                          #         s.sendall("OPEN$".encode('utf-8'))
-                          # except:
-                          #     print("[ ERROR ] Cannot open door")
-                          #     logging.error("Cannot open door")
-                          #     flagDoor = True
+                          HOSTRPI3 = '192.168.88.248'
+                          PORTRPI3 = 7755
+                          try:
+                              with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                                  s.connect((HOSTRPI3, PORTRPI3))
+                                  s.sendall("OPEN$".encode('utf-8'))
+                          except:
+                              print("[ ERROR ] Cannot open door")
+                              logging.error("Cannot open door")
+                              flagDoor = True
                           messg = ''
                           if (flagDoor == False):
                               messg = "ENTER"
@@ -234,16 +234,16 @@ class SrvHandler(threading.Thread):
                           self.clientSock.sendall(sendData.encode("utf-8"))
                       else:
                            flagDoor = False
-                           # HOSTRPI3 = '192.168.88.248'
-                           # PORTRPI3 = 7755
-                           # try:
-                           #     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                           #         s.connect((HOSTRPI3, PORTRPI3))
-                           #         s.sendall("OPEN$".encode('utf-8'))
-                           # except:
-                           #     print("[ ERROR ] Cannot open door")
-                           #     logging.error("Cannot open door")
-                           #     flagDoor = True
+                           HOSTRPI3 = '192.168.88.248'
+                           PORTRPI3 = 7755
+                           try:
+                               with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                                   s.connect((HOSTRPI3, PORTRPI3))
+                                   s.sendall("OPEN$".encode('utf-8'))
+                           except:
+                               print("[ ERROR ] Cannot open door")
+                               logging.error("Cannot open door")
+                               flagDoor = True
                            if (flagDoor == False):
                                 messg = "EXIT"
                                 print('[ INFO ] Update EXIT User: ', usrid, ' status in room.')
