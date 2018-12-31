@@ -179,16 +179,16 @@ class SrvHandler(threading.Thread):
                           print('[ INFO ] User: ', usrid, ' enter to room.')
                           logging.info("User: " + str(usrid) + " enter to room")
                           flagDoor = False
-                          HOSTRPI3 = '192.168.88.248'
-                          PORTRPI3 = 7755
-                          try:
-                              with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                                  s.connect((HOSTRPI3, PORTRPI3))
-                                  s.sendall("OPEN$".encode('utf-8'))
-                          except:
-                              print("[ ERROR ] Cannot open door")
-                              logging.error("Cannot open door")
-                              flagDoor = True
+                          # HOSTRPI3 = '192.168.88.248'
+                          # PORTRPI3 = 7755
+                          # try:
+                          #     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                          #         s.connect((HOSTRPI3, PORTRPI3))
+                          #         s.sendall("OPEN$".encode('utf-8'))
+                          # except:
+                          #     print("[ ERROR ] Cannot open door")
+                          #     logging.error("Cannot open door")
+                          #     flagDoor = True
                           messg = ''
                           if (flagDoor == False):
                               messg = "ENTER"
@@ -235,22 +235,37 @@ class SrvHandler(threading.Thread):
                       else:
                            print('[ INFO ] User: ', usrid, ' EXIT room.')
                            logging.info("User: " + str(usrid) + " EXIT room")
-                           messg = "EXIT".encode('utf-8')
+                           flagDoor = False
+                           # HOSTRPI3 = '192.168.88.248'
+                           # PORTRPI3 = 7755
+                           # try:
+                           #     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                           #         s.connect((HOSTRPI3, PORTRPI3))
+                           #         s.sendall("OPEN$".encode('utf-8'))
+                           # except:
+                           #     print("[ ERROR ] Cannot open door")
+                           #     logging.error("Cannot open door")
+                           #     flagDoor = True
+                           if (flagDoor == False):
+                                messg = "EXIT"
+                                print('[ INFO ] Update EXIT User: ', usrid, ' status in room.')
+                                logging.info("Update EXIT User: " + str(usrid) + " status in room.")
+                                sqlTask = "UPDATE `users` SET status_in_room=%s WHERE name=%s"
+                                curDB.execute(sqlTask, (0, result[1]))
+                                connDB.commit()
+
+                                print('[ INFO ] Update EXIT User: ', usrid, ' time in room.')
+                                logging.info("Update EXIT User: " + str(usrid) + " time in room.")
+                                sqlTask = "UPDATE `user_times` SET `end_time`=%s WHERE user_id=%s AND end_time=%s"
+                                curDB.execute(sqlTask, (strftime("%Y-%m-%d %H:%M:%S", gmtime()), userIDdb, None))
+                                connDB.commit()
+
+                           else:
+                               messg = "FAILED"
+                           messg = messg.encode('utf-8')
                            enc_messg = clientRSA_PublicKeys[usrid].encrypt(messg, 32)
                            sendData =  str(usrid) + "$$$104$$$DATA$$$" + str(base64.b64encode(enc_messg[0]))
                            self.clientSock.sendall(sendData.encode("utf-8"))
-
-                           print('[ INFO ] Update EXIT User: ', usrid, ' status in room.')
-                           logging.info("Update EXIT User: " + str(usrid) + " status in room.")
-                           sqlTask = "UPDATE `users` SET status_in_room=%s WHERE name=%s"
-                           curDB.execute(sqlTask, (0, result[1]))
-                           connDB.commit()
-
-                           print('[ INFO ] Update EXIT User: ', usrid, ' time in room.')
-                           logging.info("Update EXIT User: " + str(usrid) + " time in room.")
-                           sqlTask = "UPDATE `user_times` SET `end_time`=%s WHERE user_id=%s AND end_time=%s"
-                           curDB.execute(sqlTask, (strftime("%Y-%m-%d %H:%M:%S", gmtime()), userIDdb, None))
-                           connDB.commit()
                   else:
                        print('[ WARNING ] CODE 104 Problem with no User: ', usrid)
                        logging.warning("CODE 104 Problem with no User: " + str(usrid))
