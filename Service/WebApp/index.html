@@ -15,14 +15,16 @@ table.statistic {
   <link rel="stylesheet" type="text/css" href="style.css">
   <link rel="icon" type="image/png" href="http://localhost:8081/images/favicon-16x16.png" sizes="16x16" />
 </head>
-<body style="background-color:#CFD8DC;font-family:trebuchet MS">
-<div style="margin:70px">
-<img src="http://localhost:8081/images/logo.jpg" alt="Logo" width="50" height="100" style="float:left;width:42px;height:42px;">
-<h1 style="color:#212121;text-align:left;margin-left:30px;font-family:arial">     OfCon - Statistical Data Panel</h1>
-<hr>
-</div>
-<div style="margin:70px">
-<canvas   id="myChart" width = "700" height="300"  style="border:1px solid #000000;"></canvas>
+<body style="background-color:#455A64;font-family:trebuchet MS">
+<header align = "center" style=" width:100%">
+<br>
+<img src="http://localhost:8081/images/logo.jpg" alt="Logo" width="100" height="200" style="float:left;width:84px;height:84px;">
+<h1 style="color:#CFD8DC;text-align:center;font-family:arial">     <span style="color:#00BCD4" >OfCon</span> Statistical Data Panel</h1>
+</header>
+<br>
+<div style="background-color:#CFD8DC;" align = "center">
+<br>
+<canvas    id="myChart" width = "700" height="300"  style="border:1px solid #000000;"></canvas>
     <script>
 		var ctx = document.getElementById('myChart').getContext('2d');
 var myChart = new Chart(ctx, {
@@ -36,7 +38,10 @@ var myChart = new Chart(ctx, {
             yAxes: [{
                 ticks: {
                     min: XMINX,
-                    max: XMAXX
+                    max: XMAXX,
+					callback: function(value, index, values) {
+                        return value +'°C';
+                    }
                 }
             }]
         },
@@ -47,7 +52,7 @@ var myChart = new Chart(ctx, {
 </script>
 <br>
 <form action="http://localhost:8081/main" method="GET">
-<table style="border: 1px solid black;display: inline-block;width:350;margin-right:15px;"> 
+<table style="border: 1px solid black;display: inline-block;width:350;margin-left:130px;"> 
   <tr>
     <th>Genereting custom chart</th>
 
@@ -74,17 +79,17 @@ var myChart = new Chart(ctx, {
   </tr>
 </form>
 </table>
-<table class="statistic"  style="width:445;display:inline-block;">
+<table class="statistic"  style="width:445;display:inline-block; margin-left:40px;;">
   <tr class="statistic">
-    <th class="statistic">Statistics Name</th>
-    <th class="statistic">Statistics Value</th> 
+    <th class="statistic"><span style="margin-left:35px;margin-right:35px;">Name</span></th>
+    <th class="statistic"><span style="margin-left:35px;margin-right:35px;">Value</span></th> 
   </tr>
   <tr class="statistic" title="Avarage temperature in room at the moment.">
     <td class="statistic"><p style="margin-left:5px">Current Temperature</p></td>
     <td class="statistic"><p style="margin-left:5px">XTEMPERATUREX</p></td> 
   </tr>
   <tr class="statistic" title="How many workers in room at the moment." >
-    <td class="statistic"><p style="margin-left:5px">No.of people in the office</p></td>
+    <td class="statistic"><p style="margin-left:5px">No. of people in the office</p></td>
     <td class="statistic"><p style="margin-left:5px">XPEOPLEX</p></td> 
   </tr>
   <tr class="statistic" title="Fire alert." style="color:#212121;">
@@ -93,5 +98,8 @@ var myChart = new Chart(ctx, {
   </tr>
 
 </table>
+<br>
+<br>
+</div>
 </body>
 </html>
